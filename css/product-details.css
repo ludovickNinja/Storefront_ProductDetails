@@ -466,6 +466,10 @@
 }
 .pd-cz-row:hover { background: #f5f5f5; }
 .pd-cz-row input { margin: 0; }
+.pd-cz-row--reference { cursor: default; color: #777; }
+.pd-cz-row--reference:hover { background: none; }
+.pd-cz-row--reference .pd-cz-fee { color: #777; font-weight: normal; }
+.pd-cz-ref-mark { display: inline-block; width: 13px; height: 13px; }
 .pd-cz-row .pd-cz-name { flex: 1; }
 .pd-cz-row .pd-cz-hint { font-size: 10px; color: #777; }
 .pd-cz-row .pd-cz-fee { white-space: nowrap; font-weight: bold; min-width: 90px; text-align: right; }

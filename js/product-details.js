@@ -80,6 +80,7 @@
   /* ---------------- customization catalogue ---------------- */
   // Internal wholesale fee guide (CAD). fee: number = flat fee, 0 =
   // complimentary, 'quote' = quote required (not included in the total).
+  // reference: true lists the item with its fee but it cannot be selected.
   // Center stone size/shape changes are not listed here: that fee is
   // already applied from the carat weight of the center stone provided.
   const customizationCatalogue = [
@@ -127,7 +128,7 @@
     { group: 'Services', items: [
       { id: 'nickel-free',  name: 'Nickel-free white gold', fee: 150 },
       { id: 'soldering',    name: 'Soldering', hint: 'per ring', fee: 50 },
-      { id: 'retip-prongs', name: 'Retipping prongs', fee: 100 }
+      { id: 'retip-prongs', name: 'Retipping prongs', fee: 100, reference: true }
     ]},
     { group: 'Add-ons', items: [
       { id: 'travel-ring', name: 'Silver/CZ travel ring', hint: 'complimentary with an Atelier ER purchase', fee: 200 }
@@ -140,7 +141,7 @@
     let fees = 0, quotes = 0;
     ids.forEach(id => {
       const item = customizationById[id];
-      if (!item) return;
+      if (!item || item.reference) return;
       if (item.fee === 'quote') quotes++; else fees += item.fee;
     });
     return { fees, quotes, count: ids.length };
@@ -569,10 +570,18 @@
           ${g.items.map(it => {
             const feeTxt = it.fee === 'quote' ? 'Quote required' : (it.fee > 0 ? '$' + money(it.fee) : 'Complimentary');
             const feeCls = it.fee === 'quote' ? 'is-quote' : (it.fee > 0 ? '' : 'is-free');
+            const hint = it.hint ? ` <span class="pd-cz-hint">(${esc(it.hint)})</span>` : '';
+            if (it.reference) {
+              return `<div class="pd-cz-row pd-cz-row--reference" title="For reference only">
+                <span class="pd-cz-ref-mark" aria-hidden="true"></span>
+                <span class="pd-cz-name">${esc(it.name)}${hint} <span class="pd-cz-hint">(reference only)</span></span>
+                <span class="pd-cz-fee ${feeCls}">${feeTxt}</span>
+              </div>`;
+            }
             const checked = state.customizations.ids.includes(it.id);
             return `<label class="pd-cz-row${checked ? ' is-checked' : ''}">
               <input type="checkbox" name="cz" value="${it.id}"${checked ? ' checked' : ''}>
-              <span class="pd-cz-name">${esc(it.name)}${it.hint ? ` <span class="pd-cz-hint">(${esc(it.hint)})</span>` : ''}</span>
+              <span class="pd-cz-name">${esc(it.name)}${hint}</span>
               <span class="pd-cz-fee ${feeCls}">${feeTxt}</span>
             </label>`;
           }).join('')}
@@ -586,7 +595,7 @@
         bind('czCount', t.count);
         bind('czFees', money(t.fees));
         bind('czQuote', t.quotes ? `+ ${t.quotes} quote required` : '');
-        $$('.pd-cz-row', d).forEach(r => r.classList.toggle('is-checked', $('input', r).checked));
+        $$('label.pd-cz-row', d).forEach(r => r.classList.toggle('is-checked', $('input', r).checked));
       };
       list.addEventListener('change', tally);
       tally();

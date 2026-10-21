@@ -33,8 +33,10 @@ plain functions in `js/product-details.js` under `mock`:
 The Customize menu (`customizationCatalogue` in the script) lists every
 customization from the internal wholesale fee guide with its fee. Flat fees
 are added to the Total Wholesale Price; "Quote required" items are flagged
-under the total instead. Center stone size changes are not in the menu since
-that fee already comes from the carat weight of the center stone provided.
+under the total instead. Items flagged `reference: true` (Retipping prongs)
+are listed with their fee but cannot be selected. Center stone size changes
+are not in the menu since that fee already comes from the carat weight of
+the center stone provided.
 
 Total Wholesale Price = ring wholesale price + ring oversize/undersize fee
 + lab center stone (fully mounted only) + stone oversize fee + center stone
