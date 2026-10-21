@@ -35,6 +35,7 @@
     customStone: null,                     // {shape, weight, L, W, D, type, note}
     fullyMounted: { shapeID: '1', weight: 1, price: 220.22 },
     engraving: null,                       // {outside:{text,font}, inside:{text,font}, notes}
+    customizations: { ids: [], notes: '' },// ids from customizationCatalogue
     spiff: '',
     instructions: '',
     internalNotes: ['', '', '', '', ''],
@@ -74,6 +75,76 @@
       return `IGI Certified - ${ct.toFixed(2)}ct DE (R: ${this.shapes[shapeID].ratio})`;
     }
   };
+
+  /* ---------------- customization catalogue ---------------- */
+  // Internal wholesale fee guide (CAD). fee: number = flat fee, 0 =
+  // complimentary, 'quote' = quote required (not included in the total).
+  // Center stone size/shape changes are not listed here: that fee is
+  // already applied from the carat weight of the center stone provided.
+  const customizationCatalogue = [
+    { group: 'Head / Prongs', items: [
+      { id: 'prong-count',     name: 'Change number of prongs', fee: 0 },
+      { id: 'prong-type',      name: 'Change prong type', fee: 0 },
+      { id: 'prong-placement', name: 'Change prong placement', fee: 0 },
+      { id: 'support-bar',     name: 'Add or remove support bar', fee: 0 },
+      { id: 'orientation',     name: 'Change center orientation (NS / EW or kite)', fee: 0 },
+      { id: 'platinum-head',   name: 'Upgrade to platinum head on gold style', fee: 80 },
+      { id: 'hidden-halo-add', name: 'Add standard hidden halo', fee: 130 },
+      { id: 'hidden-halo-rem', name: 'Remove standard hidden halo', fee: 0 }
+    ]},
+    { group: 'Shank / Band', items: [
+      { id: 'milgrain',   name: 'Add or remove milgrain', fee: 0 },
+      { id: 'knife-edge', name: 'Add or remove knife edge', fee: 0 },
+      { id: 'euroshank',  name: 'Add or remove euroshank', fee: 0 },
+      { id: 'cathedral',  name: 'Add or remove cathedral', fee: 80 },
+      { id: 'atelier',    name: 'Full conversion to Atelier', hint: 'signature euroshank, VS melee & Atelier spiff', fee: 'quote' }
+    ]},
+    { group: 'Interior', items: [
+      { id: 'luna-add',     name: 'Add Luna pillowed interior', fee: 160 },
+      { id: 'luna-rem',     name: 'Remove Luna pillowed interior', fee: 0 },
+      { id: 'luna-full',    name: 'Full conversion to Luna', hint: 'pillows & spiff', fee: 'quote' },
+      { id: 'mens-pattern', name: "Add or remove NC Men's pattern", fee: 0 },
+      { id: 'love-diamond', name: 'Add 1mm RD SI-GH natural diamond (love diamond)', fee: 25 },
+      { id: 'sizing-beads', name: 'Add sizing beads', fee: 80 }
+    ]},
+    { group: 'Engraving', items: [
+      { id: 'hand-engraving-add', name: 'Add hand engraving', fee: 220 },
+      { id: 'hand-engraving-rem', name: 'Remove hand engraving', fee: 0 },
+      { id: 'laser-engraving',    name: 'Custom laser engraving', fee: 50 }
+    ]},
+    { group: 'Diamonds', items: [
+      { id: 'lab-melee',        name: 'Change to lab grown melee', hint: 'see B2B for the LAB SKU (Variations above)', fee: 0 },
+      { id: 'gemstone-melee',   name: 'Change to coloured gemstone melee', fee: 'quote' },
+      { id: 'add-rem-diamonds', name: 'Add or remove diamonds', fee: 'quote' },
+      { id: 'diamond-sizes',    name: 'Change diamond sizes', fee: 'quote' },
+      { id: 'diamond-quality',  name: 'Change diamond quality (other than lab)', fee: 'quote' }
+    ]},
+    { group: 'Design', items: [
+      { id: 'combine-styles', name: 'Combining two styles', fee: 'quote' },
+      { id: 'full-custom',    name: 'Complete custom (not based on any of our styles)', fee: 'quote' }
+    ]},
+    { group: 'Services', items: [
+      { id: 'nickel-free',  name: 'Nickel-free white gold', fee: 150 },
+      { id: 'soldering',    name: 'Soldering', hint: 'per ring', fee: 50 },
+      { id: 'set-stone',    name: 'Setting your center stone', fee: 80 },
+      { id: 'retip-prongs', name: 'Retipping prongs', fee: 100 }
+    ]},
+    { group: 'Add-ons', items: [
+      { id: 'travel-ring', name: 'Silver/CZ travel ring', hint: 'complimentary with an Atelier ER purchase', fee: 200 }
+    ]}
+  ];
+  const customizationById = {};
+  customizationCatalogue.forEach(g => g.items.forEach(i => { customizationById[i.id] = i; }));
+
+  function customizationTotals(ids) {
+    let fees = 0, quotes = 0;
+    ids.forEach(id => {
+      const item = customizationById[id];
+      if (!item) return;
+      if (item.fee === 'quote') quotes++; else fees += item.fee;
+    });
+    return { fees, quotes, count: ids.length };
+  }
 
   /* ---------------- MOCK server rules ---------------- */
   const mock = {
@@ -140,21 +211,38 @@
   }
 
   /* ---------------- price ---------------- */
-  function priceLines() {
-    const lines = { oversize: '', stoneOversize: '', engraving: '' };
-    const ring = mock.ringOversizeFee(state.size);
-    if (ring > 0) lines.oversize = `Ring Oversize Fee: $${money(ring)}`;
-    if (ring < 0) lines.oversize = `Ring Undersize Fee: $${money(ring)}`;
+  // Every amount that goes into the total, each with its display line.
+  function priceBreakdown() {
+    const b = {
+      base: state.basePrice,
+      ringOversize: mock.ringOversizeFee(state.size),
+      centerStone: 0,          // fully-mounted lab center: stone + setting
+      stoneOversize: 0,
+      engraving: engravingFee(),
+      customizations: 0,
+      quotes: 0,
+      lines: { oversize: '', centerStone: '', stoneOversize: '', engraving: '', customizations: '' }
+    };
+    if (b.ringOversize > 0) b.lines.oversize = `Ring Oversize Fee: $${money(b.ringOversize)}`;
+    if (b.ringOversize < 0) b.lines.oversize = `Ring Undersize Fee: $${money(b.ringOversize)}`;
 
-    if (state.mounted === 'Unmounted' && state.customStone) {
-      const fee = mock.stoneOversizeFee(state.customStone.weight);
-      if (fee > 0) lines.stoneOversize = `Stone Oversize Fee: $${money(fee)}`;
+    if (state.mounted === 'Fully Mounted') {
+      b.centerStone = state.fullyMounted.price + 0; // setting price: complimentary
+      b.lines.centerStone = `Lab Center Stone: $${money(b.centerStone)} (setting complimentary)`;
+      b.stoneOversize = mock.stoneOversizeFee(state.fullyMounted.weight);
+    } else if (state.customStone) {
+      b.stoneOversize = mock.stoneOversizeFee(state.customStone.weight);
     }
-    if (state.engraving) {
-      const fee = engravingFee();
-      if (fee > 0) lines.engraving = `Engraving Fee: $${money(fee)}`;
-    }
-    return lines;
+    if (b.stoneOversize > 0) b.lines.stoneOversize = `Stone Oversize Fee: $${money(b.stoneOversize)}`;
+    if (b.engraving > 0) b.lines.engraving = `Engraving Fee: $${money(b.engraving)}`;
+
+    const cz = customizationTotals(state.customizations.ids);
+    b.customizations = cz.fees;
+    b.quotes = cz.quotes;
+    if (cz.fees > 0) b.lines.customizations = `Customization Fees: $${money(cz.fees)}`;
+
+    b.total = b.base + b.ringOversize + b.centerStone + b.stoneOversize + b.engraving + b.customizations;
+    return b;
   }
 
   function engravingFee() {
@@ -168,10 +256,35 @@
     bind('skuSuffix', skuSuffix());
     bind('price', money(state.basePrice));
 
-    const lines = priceLines();
-    bind('oversizeFee', lines.oversize);
-    bind('stoneOversizeFeeLine', lines.stoneOversize);
-    bind('engravingFeeLine', lines.engraving);
+    const pb = priceBreakdown();
+    bind('oversizeFee', pb.lines.oversize);
+    bind('centerStoneLine', pb.lines.centerStone);
+    bind('stoneOversizeFeeLine', pb.lines.stoneOversize);
+    bind('engravingFeeLine', pb.lines.engraving);
+    bind('customizationFeeLine', pb.lines.customizations);
+    bind('total', money(pb.total));
+    const totalNote = $('[data-bind="totalNote"]');
+    totalNote.hidden = pb.quotes === 0;
+    totalNote.textContent = pb.quotes ? `+ ${pb.quotes} customization${pb.quotes > 1 ? 's' : ''} requiring a quote` : '';
+
+    // customizations summary
+    const czs = $('#pdCustomizeSummary');
+    const ids = state.customizations.ids;
+    czs.hidden = ids.length === 0 && !state.customizations.notes;
+    if (!czs.hidden) {
+      bind('customizationList', ids.map(id => {
+        const it = customizationById[id];
+        const fee = it.fee === 'quote' ? '<span class="pd-summary-quote">Quote required</span>' : (it.fee > 0 ? '$' + money(it.fee) : 'Complimentary');
+        return `<li><span>${esc(it.name)}</span><span>${fee}</span></li>`;
+      }).join(''));
+      const notes = $('[data-bind="customizationNotes"]');
+      notes.hidden = !state.customizations.notes;
+      notes.textContent = state.customizations.notes;
+      bind('customizationFees', pb.customizations > 0 ? '$' + money(pb.customizations) : 'Complimentary');
+      const q = $('[data-bind="customizationQuote"]');
+      q.hidden = pb.quotes === 0;
+      q.textContent = pb.quotes ? 'Head Office will quote the item(s) marked above before the order is confirmed.' : '';
+    }
 
     // mounted toggle
     const fm = state.mounted === 'Fully Mounted';
@@ -209,7 +322,7 @@
 
     // engraving
     const hasEngraving = !!state.engraving && (state.engraving.outside || state.engraving.inside);
-    $('#pdEngravingAdd').hidden = hasEngraving;
+    $('[data-bind="engravingButton"]').textContent = hasEngraving ? 'Edit Engraving' : 'Add Engraving';
     $('#pdEngravingSummary').hidden = !hasEngraving;
     if (hasEngraving) {
       const e = state.engraving;
@@ -438,6 +551,53 @@
     });
   }
 
+  /* ---- customize ---- */
+  function openCustomize() {
+    openDialog('tplCustomize', d => {
+      const list = $('.pd-cz-list', d);
+      list.innerHTML = customizationCatalogue.map(g => `
+        <div class="pd-cz-group">
+          <h4>${esc(g.group)}</h4>
+          ${g.items.map(it => {
+            const feeTxt = it.fee === 'quote' ? 'Quote required' : (it.fee > 0 ? '$' + money(it.fee) : 'Complimentary');
+            const feeCls = it.fee === 'quote' ? 'is-quote' : (it.fee > 0 ? '' : 'is-free');
+            const checked = state.customizations.ids.includes(it.id);
+            return `<label class="pd-cz-row${checked ? ' is-checked' : ''}">
+              <input type="checkbox" name="cz" value="${it.id}"${checked ? ' checked' : ''}>
+              <span class="pd-cz-name">${esc(it.name)}${it.hint ? ` <span class="pd-cz-hint">(${esc(it.hint)})</span>` : ''}</span>
+              <span class="pd-cz-fee ${feeCls}">${feeTxt}</span>
+            </label>`;
+          }).join('')}
+        </div>`).join('');
+      const notes = $('[name=customizationNotes]', d);
+      notes.value = state.customizations.notes;
+
+      const selectedIds = () => $$('[name=cz]:checked', d).map(c => c.value);
+      const tally = () => {
+        const t = customizationTotals(selectedIds());
+        bind('czCount', t.count);
+        bind('czFees', money(t.fees));
+        bind('czQuote', t.quotes ? `+ ${t.quotes} quote required` : '');
+        $$('.pd-cz-row', d).forEach(r => r.classList.toggle('is-checked', $('input', r).checked));
+      };
+      list.addEventListener('change', tally);
+      tally();
+
+      return {
+        save() {
+          state.customizations = { ids: selectedIds(), notes: notes.value.trim() };
+          closeDialog();
+          render();
+        },
+        clear() {
+          $$('[name=cz]', d).forEach(c => { c.checked = false; });
+          notes.value = '';
+          tally();
+        }
+      };
+    });
+  }
+
   /* ---- SPIFF ---- */
   function openSpiff(thenAddToCart) {
     openDialog('tplSpiff', d => {
@@ -590,6 +750,7 @@
       case 'shipping-date': openShippingDate(); break;
       case 'custom-stone': openCustomStone(); break;
       case 'engraving': openEngraving(); break;
+      case 'customize': openCustomize(); break;
       case 'spiff': openSpiff(false); break;
       case 'add-to-list': openAddToList(); break;
       case 'instructions': openInstructions(); break;

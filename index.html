@@ -310,22 +310,42 @@
         </table>
       </section>
 
-      <section class="pd-section pd-engraving">
-        <div id="pdEngravingAdd">
-          <button type="button" class="pd-btn-pill" data-action="engraving">Add Engraving</button>
+      <section class="pd-section pd-options">
+        <div class="pd-options-buttons">
+          <button type="button" class="pd-btn-pill pd-btn-pill--gold" data-action="customize">Customize</button>
+          <button type="button" class="pd-btn-pill pd-btn-pill--blue" data-action="engraving" data-bind="engravingButton">Add Engraving</button>
         </div>
-        <div id="pdEngravingSummary" hidden>
+
+        <div id="pdCustomizeSummary" class="pd-summary" hidden>
+          <div class="pd-summary-title">Customizations</div>
+          <ul class="pd-summary-list" data-bind="customizationList"></ul>
+          <div class="pd-summary-notes" data-bind="customizationNotes" hidden></div>
+          <div class="blue bold">Customization Fees: <span data-bind="customizationFees">Complimentary</span></div>
+          <div class="pd-summary-quote" data-bind="customizationQuote" hidden></div>
+          <button type="button" class="linkish blue" data-action="customize">Edit customizations</button>
+        </div>
+
+        <div id="pdEngravingSummary" class="pd-summary" hidden>
+          <div class="pd-summary-title">Engraving</div>
           <div data-bind="engravingDetails"></div>
           <div class="blue bold">Engraving Fee: <span data-bind="engravingFee">Complimentary</span></div>
-          <button type="button" class="divButton" data-action="engraving">View Options</button>
+          <button type="button" class="linkish blue" data-action="engraving">View options</button>
         </div>
       </section>
 
       <section class="pd-price">
         <div>Wholesale Price <strong>$<span data-bind="price">1,104.96</span></strong> CAD</div>
         <div class="pd-fee blue" data-bind="oversizeFee"></div>
+        <div class="pd-fee blue" data-bind="centerStoneLine"></div>
         <div class="pd-fee blue" data-bind="stoneOversizeFeeLine"></div>
         <div class="pd-fee blue" data-bind="engravingFeeLine"></div>
+        <div class="pd-fee blue" data-bind="customizationFeeLine"></div>
+
+        <div class="pd-total">
+          <div class="pd-total-label">Total Wholesale Price</div>
+          <div class="pd-total-amount"><strong>$<span data-bind="total">1,104.96</span></strong> CAD</div>
+          <div class="pd-total-note" data-bind="totalNote" hidden></div>
+        </div>
 
         <button type="button" class="divButton divBtCart" data-action="add-to-cart">Add to cart</button>
 
@@ -460,6 +480,23 @@
       <button type="button" class="divButton" data-dialog="save">Save</button>
       <button type="button" class="divButton" data-dialog="remove">Remove engraving</button>
       <button type="button" class="divButton" data-dialog="close">Cancel</button>
+    </div>
+  </div>
+</template>
+
+<template id="tplCustomize">
+  <div class="pd-dialog-inner pd-dialog-inner--wide pd-cz">
+    <h2>Customize this ring</h2>
+    <p class="pd-small-print">Fees from the internal wholesale fee guide. Items marked <em class="pd-cz-quote">Quote required</em> are sent to Head Office for pricing and are not included in the total.</p>
+    <div class="pd-cz-list"></div>
+    <label>Customization notes <textarea name="customizationNotes" rows="2" placeholder="e.g. 6 prongs, NS orientation, sizing beads at 6 and 12"></textarea></label>
+    <div class="pd-cz-footer">
+      <div class="pd-cz-tally"><span data-bind="czCount">0</span> selected &middot; Fees: <strong>$<span data-bind="czFees">0.00</span></strong> <span data-bind="czQuote"></span></div>
+      <div class="pd-dialog-actions">
+        <button type="button" class="divButton" data-dialog="save">Save</button>
+        <button type="button" class="divButton" data-dialog="clear">Clear all</button>
+        <button type="button" class="divButton" data-dialog="close">Cancel</button>
+      </div>
     </div>
   </div>
 </template>
