@@ -53,10 +53,13 @@
       if (s <= 3.5) return -15; // "undersize" (shown as negative like the live site)
       return 0;
     },
+    // Internal wholesale fee guide, "Center stone size / shape changes".
+    // Based on the carat weight of the center stone provided.
     stoneOversizeFee(weight) {
       const w = parseFloat(weight) || 0;
-      if (w > 3) return 150;
-      if (w > 2) return 75;
+      if (w >= 7) return 350;
+      if (w >= 5) return 250;
+      if (w >= 3.5) return 180;
       return 0;
     },
     estShipDate(dateNeeded) {

@@ -25,7 +25,7 @@ The live page talks to `details_act.asp` for most things. Here those are
 plain functions in `js/product-details.js` under `mock`:
 
 - ring oversize / undersize fee by size
-- stone oversize fee by carat weight
+- stone oversize fee by carat weight (from the internal wholesale fee guide: complimentary under 3.50 ct, $180 for 3.50 to 4.99 ct, $250 for 5.00 to 6.99 ct, $350 for 7.00 ct and up)
 - fully-mounted stone price per size option
 - estimated ship date from the date needed
 - SKU rewrite when metal, diamond size or variation changes
