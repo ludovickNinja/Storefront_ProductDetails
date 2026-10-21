@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product Details POC - B001-01YM-100A</title>
+<link rel="stylesheet" href="css/storefront.css">
+<link rel="stylesheet" href="css/product-details.css">
+</head>
+<body>
+
+<!-- ====================================================================
+     Storefront chrome (header / footer). Static, only here so the modal
+     sits in the same context as the live B2B site.
+     ==================================================================== -->
+<div class="header_wrapper">
+  <header>
+    <div class="heading">
+      <div class="tagline">Crown Canada (<span class="cap">Head Office</span>)</div>
+      <div class="header-row">
+        <a class="logo" href="#" aria-label="CrownRing home"><img src="assets/images/logo.png" alt="CrownRing"></a>
+        <div class="search">
+          <div class="search-box">
+            <input type="text" placeholder="Type style number here" readonly>
+            <button type="button" aria-label="Search"><img src="assets/images/icons/bt_search.gif" alt=""></button>
+          </div>
+          <div class="search-links">
+            For Traditional Bands, click <span>here</span>.
+            For Anniversary Bands, click <span>here</span>
+          </div>
+        </div>
+        <nav class="menu_main">
+          <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Collections</a></li>
+            <li><a href="#">Contact us</a></li>
+            <li><a href="#">Logout</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    <div class="white_wrapper">
+      <ul class="menu_top">
+        <li><a href="#">Order History</a></li>
+        <li><a href="#">Request RA</a></li>
+        <li><a href="#">My Tools</a></li>
+        <li class="wide"><a href="#">Warranty Info</a></li>
+        <li><a href="#">My Account</a></li>
+        <li><a href="#">SPIFF Login</a></li>
+        <li><a href="#">My Cart (<span id="cartCount">1</span>)</a></li>
+      </ul>
+    </div>
+  </header>
+</div>
+
+<main class="contents">
+  <div class="content_wrapper">
+    <p class="poc-note">
+      Product details POC. The detail window below is a rebuild of
+      <code>b2b/detail.asp?SKU=B001-01YM-100A</code>.
+      <button type="button" class="linkish" id="btnReopen" hidden>Reopen detail window</button>
+    </p>
+  </div>
+</main>
+
+<div class="footer_wrapper">
+  <div class="footer">
+    <div class="copy">&copy; Copyright 2026 by CrownRing. All Rights Reserved...</div>
+    <div class="social">
+      <a href="#"><img src="assets/images/icons/ic_tw.gif" alt="Twitter"></a>
+      <a href="#"><img src="assets/images/icons/ic_fb.gif" alt="Facebook"></a>
+      <a href="#"><img src="assets/images/icons/ic_is.gif" alt="Instagram"></a>
+      <a href="#"><img src="assets/images/icons/ic_pt.gif" alt="Pinterest"></a>
+      <a href="#"><img src="assets/images/icons/ic_in.gif" alt="LinkedIn"></a>
+      <a href="#"><img src="assets/images/icons/ic_yt.gif" alt="YouTube"></a>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================================
+     Product detail window. On the live site this is an <iframe> loaded
+     into #divOverlay; here it is inline markup.
+     ==================================================================== -->
+<div class="pd-overlay" id="pdOverlay">
+<section class="pd-window" id="pdWindow" aria-label="Product details"
+         data-base-sku="B001-01YM-100A" data-base-price="1104.96">
+
+  <div class="pd-titlebar">
+    <div>Item #: <span data-bind="sku">B001-01YM-100A</span></div>
+    <div class="pd-titlebar-actions">
+      <a href="#" data-action="close">close window</a>
+      <a href="#" data-action="close" class="pd-x">X</a>
+    </div>
+  </div>
+
+  <div class="pd-body">
+
+    <!-- ---------- Thumbnails ---------- -->
+    <aside class="pd-thumbs">
+      <div class="pd-thumb is-active" data-image="assets/images/products/B001-01YA.jpg">
+        <img src="assets/images/products/B001-01YA.jpg" alt="B001-01YA main view">
+      </div>
+      <!-- Alternate views are not publicly served; drop the real files in and
+           replace the placeholders below. -->
+      <div class="pd-thumb pd-thumb--placeholder" data-image="" data-label="Alt view 1">
+        <span>Alt view 1</span>
+      </div>
+      <div class="pd-thumb pd-thumb--placeholder" data-image="" data-label="Alt view 2">
+        <span>Alt view 2</span>
+      </div>
+      <div class="pd-thumb pd-thumb--placeholder" data-image="" data-label="Alt view 3">
+        <span>Alt view 3</span>
+      </div>
+
+      <div class="pd-thumbs-heading">Matching band</div>
+      <a class="pd-thumb pd-thumb--link" href="#" data-sku="B001-01YM-100B" title="Open B001-01YM-100B">
+        <img src="assets/images/products/B001-01YB.jpg" alt="Matching band B001-01YB">
+      </a>
+    </aside>
+
+    <!-- ---------- Main image + shipping + contact ---------- -->
+    <div class="pd-main">
+      <div class="pd-image">
+        <img id="pdMainImage" src="assets/images/products/B001-01YA.jpg" alt="B001-01YM-100A" data-action="enlarge">
+      </div>
+      <div class="pd-finish">All High Polish</div>
+
+      <div class="pd-shipping">
+        <div>
+          Estimated shipping date:
+          <span class="pd-shipdate" data-bind="shipDate">November 18, 2026</span>
+          <div class="pd-shipping-link blue">(<a href="#" data-action="shipping-date">Click here to modify your shipping date</a>)</div>
+        </div>
+        <input type="hidden" name="dateNeeded" value="2026-11-18">
+      </div>
+
+      <div class="pd-contact">
+        <div>Don't see what you want??<br>Call 1-866-214-RING for information.</div>
+        <div class="pd-contact-email">
+          <a href="mailto:service@crownring.com?subject=Custom%20Request%20for%20ring%20nbr%20B001-01YM-100A">
+            <img src="assets/images/icons/details_email.gif" alt="">
+            Email a request for a custom quote about this ring
+          </a>
+        </div>
+      </div>
+
+      <table class="pd-metal-rates">
+        <caption>Metal rates</caption>
+        <tr><th>Gold <small>(CAD/OZ)</small>:</th><td>5800 to 5900</td></tr>
+        <tr><th>Palladium 950 <small>(CAD/OZ)</small>:</th><td>1550 to 1650</td></tr>
+        <tr><th>Platinum 950 <small>(CAD/OZ)</small>:</th><td>2300 to 2400</td></tr>
+      </table>
+
+      <div class="pd-print">
+        <button type="button" class="linkish" data-action="print"><img src="assets/images/icons/details_print.gif" alt=""> Print this page</button>
+        <button type="button" class="linkish" data-action="print-retail"><img src="assets/images/icons/details_print.gif" alt=""> Print this page for retail</button>
+      </div>
+    </div>
+
+    <!-- ---------- Right column: configuration ---------- -->
+    <form class="pd-config" id="pdForm" onsubmit="return false;">
+
+      <div class="pd-sku-block">
+        Item # <span data-bind="sku">B001-01YM-100A</span><span data-bind="skuSuffix">-C</span>
+        <div class="pd-collection">Noam Carver Bridal - Bridal</div>
+      </div>
+
+      <section class="pd-section">
+        <h3>Ring info</h3>
+        <table class="pd-fields">
+          <tr>
+            <th>Metal/Colour:</th>
+            <td>
+              <select name="karatColour" class="selectBox">
+                <option value="2_16" data-code="RM">14K&nbsp;&nbsp;Rose</option>
+                <option value="2_1" data-code="WM">14K&nbsp;&nbsp;White</option>
+                <option value="2_2" data-code="YM" selected>14K&nbsp;&nbsp;Yellow</option>
+                <option value="2_69" data-code="YWM">14K&nbsp;&nbsp;Yellow Shank with White Head</option>
+                <option value="182_1" data-code="WPM">14K/Platinum&nbsp;&nbsp;White</option>
+                <option value="3_16" data-code="RE">18K&nbsp;&nbsp;Rose</option>
+                <option value="3_1" data-code="WE">18K&nbsp;&nbsp;White</option>
+                <option value="3_2" data-code="YE">18K&nbsp;&nbsp;Yellow</option>
+                <option value="17_20" data-code="PL">Platinum 950</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <th>Size:</th>
+            <td><select name="size" class="selectBox" id="pdSize"></select></td>
+          </tr>
+          <tr>
+            <th>Qty:</th>
+            <td><select name="qty" class="selectBox" id="pdQty"></select></td>
+          </tr>
+          <tr>
+            <th>Variations:</th>
+            <td>
+              <select name="variation" class="selectBox">
+                <option value="B001-01YM-100A">Please select</option>
+                <option value="B001-01YM-Lab-100A">Lab Diamond Version</option>
+              </select>
+            </td>
+          </tr>
+        </table>
+      </section>
+
+      <section class="pd-section">
+        <h3>Provide your center stone info</h3>
+
+        <div class="pd-mounted">
+          <label><input type="radio" name="diamondMounted" value="Unmounted" checked> <span>Unmounted</span></label>
+          <label><input type="radio" name="diamondMounted" value="Fully Mounted"> <span>Fully Mounted (Lab Center)</span></label>
+        </div>
+
+        <!-- Fully mounted (lab center) -->
+        <div class="pd-fully-mounted" id="pdFullyMounted" hidden>
+          <table class="pd-fields pd-fields--tight">
+            <tr><th>Stone:</th><td><span class="pd-static">Diamond</span></td></tr>
+            <tr>
+              <th>Shape:</th>
+              <td>
+                <select name="stoneShapeID" class="selectBox">
+                  <option value="70">Elongated Cushion</option>
+                  <option value="5">Emerald</option>
+                  <option value="21">Marquise</option>
+                  <option value="16">Oval</option>
+                  <option value="23">Pear</option>
+                  <option value="2">Princess</option>
+                  <option value="18">Radiant</option>
+                  <option value="1" selected>Round</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <th>Size:</th>
+              <td class="pd-inline-fields">
+                <select name="stoneSizeID" class="selectBox">
+                  <option value="701" data-weight="1" data-price="220.22">Certified - 1.00ct DEF</option>
+                  <option value="702" data-weight="1.5" data-price="410.00">Certified - 1.50ct DEF</option>
+                  <option value="703" data-weight="2" data-price="690.00">Certified - 2.00ct DEF</option>
+                  <option value="704" data-weight="2.5" data-price="980.00">Certified - 2.50ct DEF</option>
+                  <option value="705" data-weight="3" data-price="1350.00">Certified - 3.00ct DEF</option>
+                  <option value="706" data-weight="3.5" data-price="1780.00">Certified - 3.50ct DEF</option>
+                  <option value="707" data-weight="4" data-price="2250.00">Certified - 4.00ct DEF</option>
+                </select>
+                <span>Quality: <span class="pd-static">Lab VS1</span></span>
+              </td>
+            </tr>
+          </table>
+          <div class="pd-fm-price">
+            <div>Stone Price: <span data-bind="stonePrice">$220.22</span> &nbsp; Setting Price: <span>Complimentary</span></div>
+            <div data-bind="stoneOversizeRow" hidden>Stone Oversize fee: <span data-bind="stoneOversizeFee">$0.00</span></div>
+          </div>
+        </div>
+
+        <!-- Unmounted: customer supplies the stone -->
+        <div id="pdUnmounted">
+          <table class="pd-fields">
+            <tr>
+              <th>Diamond Shape</th>
+              <td>
+                <div class="pd-dd" id="ddShape">
+                  <button type="button" class="pd-dd-toggle selectBox">
+                    <span class="pd-dd-value"><img src="assets/images/diamond-shapes/round.jpg" alt=""> Round</span>
+                  </button>
+                  <ul class="pd-dd-list" hidden>
+                    <li data-value="1" data-img="assets/images/diamond-shapes/round.jpg"><img src="assets/images/diamond-shapes/round.jpg" alt=""> Round</li>
+                    <li data-value="0" class="pd-dd-custom">Custom Shape</li>
+                  </ul>
+                  <input type="hidden" name="diamondShape3" value="1">
+                </div>
+              </td>
+            </tr>
+            <tr id="rowDiamondSize">
+              <th>Diamond Size</th>
+              <td>
+                <div class="pd-dd" id="ddSize">
+                  <button type="button" class="pd-dd-toggle selectBox">
+                    <span class="pd-dd-value">1.00 <em>Range in mm 6.3 to 6.5</em></span>
+                  </button>
+                  <ul class="pd-dd-list" hidden>
+                    <li data-value="0.5">0.50 <em>Range in mm 4.9 to 5.2</em></li>
+                    <li data-value="0.75">0.75 <em>Range in mm 5.7 to 5.9</em></li>
+                    <li data-value="1">1.00 <em>Range in mm 6.3 to 6.5</em></li>
+                    <li data-value="1.5">1.50 <em></em></li>
+                    <li data-value="0" class="pd-dd-custom">Custom Size <em>Out of Range</em></li>
+                  </ul>
+                  <input type="hidden" name="diamondSize3" value="1">
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2" class="pd-small-print">
+                *Please be advised that our range tolerances are very strict, if your stone does not fit within one of the listed ranges please choose Custom Size and follow the steps.
+              </td>
+            </tr>
+          </table>
+
+          <div class="pd-custom-info" id="pdCustomInfo" hidden>
+            <div class="pd-custom-info-label">Custom Info:</div>
+            <div class="pd-custom-info-body" data-bind="customInfo"></div>
+            <a href="#" class="blue" data-action="custom-stone">Modify</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="pd-section pd-diamond-info">
+        <h3>Diamond info <span class="pd-section-note blue">Diamond weights may vary</span></h3>
+        <table class="pd-diamond-table">
+          <tr>
+            <td>Type: <strong>Diamond</strong></td>
+            <td>Quantity: <strong>20</strong></td>
+            <td>Shape: <strong>RD</strong></td>
+          </tr>
+          <tr>
+            <td>TCW: <strong>0.24 Ct</strong></td>
+            <td>Colour: <strong>GH</strong></td>
+            <td>Quality: <strong>SI</strong></td>
+          </tr>
+        </table>
+      </section>
+
+      <section class="pd-section pd-engraving">
+        <div id="pdEngravingAdd">
+          <button type="button" class="pd-btn-pill" data-action="engraving">Add Engraving</button>
+        </div>
+        <div id="pdEngravingSummary" hidden>
+          <div data-bind="engravingDetails"></div>
+          <div class="blue bold">Engraving Fee: <span data-bind="engravingFee">Complimentary</span></div>
+          <button type="button" class="divButton" data-action="engraving">View Options</button>
+        </div>
+      </section>
+
+      <section class="pd-price">
+        <div>Wholesale Price <strong>$<span data-bind="price">1,104.96</span></strong> CAD</div>
+        <div class="pd-fee blue" data-bind="oversizeFee"></div>
+        <div class="pd-fee blue" data-bind="stoneOversizeFeeLine"></div>
+        <div class="pd-fee blue" data-bind="engravingFeeLine"></div>
+
+        <button type="button" class="divButton divBtCart" data-action="add-to-cart">Add to cart</button>
+
+        <input type="hidden" name="SPIFF_salesperson" value="">
+        <button type="button" class="divButton blue pd-btn-spiff" data-action="spiff" data-bind="spiffButton">Enter SPIFF salesperson</button>
+
+        <div class="pd-list-wrap">
+          <button type="button" class="divButton pd-btn-list" data-action="add-to-list">Add to my list/proposal</button>
+        </div>
+      </section>
+
+      <div class="pd-instructions">
+        To add special instructions, <a href="#" data-action="instructions">click here</a>
+        <textarea name="instruction" hidden></textarea>
+        <div class="pd-instructions-preview" data-bind="instructionsPreview" hidden></div>
+      </div>
+
+      <div class="pd-footer-links">
+        <span class="pd-disclaimer" tabindex="0">Disclaimer:
+          <span class="pd-disclaimer-text">Images may not 100% represent actual product you are purchasing. Diamond weights are not exact and may vary based on final design.</span>
+        </span>
+        <a href="#" class="pd-internal-notes" data-action="internal-notes">Internal Notes</a>
+      </div>
+    </form>
+  </div>
+</section>
+</div>
+
+<!-- ====================================================================
+     Secondary dialogs (engraving, custom stone, SPIFF, list, etc.)
+     One generic container; each dialog is a <template> cloned by JS.
+     ==================================================================== -->
+<div class="pd-dialog-backdrop" id="pdDialogBackdrop" hidden>
+  <div class="pd-dialog" id="pdDialog" role="dialog" aria-modal="true"></div>
+</div>
+
+<template id="tplLightbox">
+  <div class="pd-lightbox">
+    <button type="button" class="pd-lightbox-close" data-dialog="close" aria-label="Close"><img src="assets/images/icons/close-circle-outline.svg" alt=""></button>
+    <button type="button" class="pd-lightbox-arrow pd-lightbox-arrow--left" data-dialog="prev" aria-label="Previous"><img src="assets/images/icons/arrow-left.svg" alt=""></button>
+    <img class="pd-lightbox-image" src="" alt="">
+    <button type="button" class="pd-lightbox-arrow pd-lightbox-arrow--right" data-dialog="next" aria-label="Next"><img src="assets/images/icons/arrow-right.svg" alt=""></button>
+    <div class="pd-lightbox-thumbs"></div>
+  </div>
+</template>
+
+<template id="tplShippingDate">
+  <div class="pd-dialog-inner">
+    <h2>Date needed</h2>
+    <p>Select the date you need this ring by. Weekends and plant closures are not available.</p>
+    <label>Date needed <input type="date" name="dateNeeded"></label>
+    <p>Estimated shipping date: <strong data-bind="estShipDate"></strong></p>
+    <div class="pd-dialog-actions">
+      <button type="button" class="divButton" data-dialog="save">Save</button>
+      <button type="button" class="divButton" data-dialog="close">Cancel</button>
+    </div>
+  </div>
+</template>
+
+<template id="tplCustomStone">
+  <div class="pd-dialog-inner pd-dialog-inner--wide">
+    <h2>Custom center stone</h2>
+    <p class="pd-small-print">Enter the details of the stone you will be supplying. A stone oversize fee applies above 2.00 ct.</p>
+    <div class="pd-grid-2">
+      <label>Shape
+        <select name="centerStone_customShape">
+          <option value="1">Round</option>
+          <option value="16">Oval</option>
+          <option value="23">Pear</option>
+          <option value="21">Marquise</option>
+          <option value="5">Emerald</option>
+          <option value="2">Princess</option>
+          <option value="18">Radiant</option>
+          <option value="70">Elongated Cushion</option>
+          <option value="99">Other</option>
+        </select>
+      </label>
+      <label>Carat weight <input type="number" step="0.01" min="0" name="centerStone_customWeight" placeholder="e.g. 1.25"></label>
+    </div>
+    <fieldset>
+      <legend>Stone dimensions (mm)</legend>
+      <div class="pd-grid-3">
+        <label>Length <input type="number" step="0.01" min="0" name="centerStone_customDimensionsL"></label>
+        <label>Width <input type="number" step="0.01" min="0" name="centerStone_customDimensionsW"></label>
+        <label>Depth <input type="number" step="0.01" min="0" name="centerStone_customDimensionsD"></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Stone type</legend>
+      <label><input type="radio" name="centerStone_stoneType" value="diamond" checked> Diamond</label>
+      <label><input type="radio" name="centerStone_stoneType" value="lab diamond"> Lab diamond</label>
+      <label><input type="radio" name="centerStone_stoneType" value="moissanite"> Moissanite</label>
+      <label><input type="radio" name="centerStone_stoneType" value="other"> Other</label>
+    </fieldset>
+    <label>Stone note <textarea name="centerStone_stoneType_descr" rows="2"></textarea></label>
+    <label class="pd-confirm"><input type="checkbox" name="confirmBox"> I have reviewed the instructions and the information above is correct.</label>
+    <div class="pd-dialog-actions">
+      <button type="button" class="divButton" data-dialog="save">Save</button>
+      <button type="button" class="divButton" data-dialog="close">Cancel</button>
+    </div>
+  </div>
+</template>
+
+<template id="tplEngraving">
+  <div class="pd-dialog-inner pd-dialog-inner--wide">
+    <h2>Engraving</h2>
+    <div class="pd-engrave-position">
+      <label><input type="checkbox" name="ngrv_pos" value="Outside"> Outside <small>($25.00)</small></label>
+      <label><input type="checkbox" name="ngrv_pos" value="Inside"> Inside <small>($15.00)</small></label>
+    </div>
+    <div class="pd-engrave-block" data-pos="Outside" hidden>
+      <h4>Outside</h4>
+      <label>Text <input type="text" name="ngrv_Txt1" maxlength="30"></label>
+      <div class="pd-engrave-fonts">
+        Font:
+        <label><input type="radio" name="ngrv_Font1" value="Block" checked> Block</label>
+        <label><input type="radio" name="ngrv_Font1" value="Script"> Script</label>
+      </div>
+    </div>
+    <div class="pd-engrave-block" data-pos="Inside" hidden>
+      <h4>Inside</h4>
+      <label>Text <input type="text" name="ngrv_Txt2" maxlength="30"></label>
+      <div class="pd-engrave-fonts">
+        Font:
+        <label><input type="radio" name="ngrv_Font2" value="Block" checked> Block</label>
+        <label><input type="radio" name="ngrv_Font2" value="Script"> Script</label>
+      </div>
+    </div>
+    <label>Special instructions <textarea name="ngrv_SpecialInstructions" rows="2"></textarea></label>
+    <label class="pd-confirm"><input type="checkbox" name="ngrvYesCorrect"> YES The engraving I entered is correct</label>
+    <div class="pd-dialog-actions">
+      <button type="button" class="divButton" data-dialog="save">Save</button>
+      <button type="button" class="divButton" data-dialog="remove">Remove engraving</button>
+      <button type="button" class="divButton" data-dialog="close">Cancel</button>
+    </div>
+  </div>
+</template>
+
+<template id="tplSpiff">
+  <div class="pd-dialog-inner">
+    <h2 data-bind="spiffTitle">SPIFF salesperson</h2>
+    <label>Select SPIFF Salesperson
+      <select name="SPIFF_salespersonID">
+        <option value="">Please select</option>
+        <option>Alex Martin</option>
+        <option>Jordan Lee</option>
+        <option>Sam Patel</option>
+        <option>Taylor Nguyen</option>
+      </select>
+    </label>
+    <div class="pd-dialog-actions">
+      <button type="button" class="divButton" data-dialog="save">Continue</button>
+      <button type="button" class="linkish blue" data-dialog="skip">skip this step</button>
+    </div>
+  </div>
+</template>
+
+<template id="tplAddToList">
+  <div class="pd-dialog-inner">
+    <h2>Add to my list / proposal</h2>
+    <label>Type
+      <select name="listType">
+        <option>List</option>
+        <option>Proposal</option>
+        <option>Showcase</option>
+      </select>
+    </label>
+    <fieldset>
+      <legend data-bind="existingLabel">Existing List</legend>
+      <select name="listID">
+        <option>Spring bridal picks</option>
+        <option>Yellow gold solitaires</option>
+      </select>
+    </fieldset>
+    <fieldset>
+      <legend data-bind="newLabel">New List</legend>
+      <label>Name <input type="text" name="newListName"></label>
+      <label>Description <input type="text" name="newListDescription"></label>
+    </fieldset>
+    <label><span data-bind="noteLabel">Notes</span> <textarea name="listNote" rows="2"></textarea></label>
+    <div class="pd-dialog-actions">
+      <button type="button" class="divButton" data-dialog="save">Add</button>
+      <button type="button" class="divButton" data-dialog="close">Cancel</button>
+    </div>
+  </div>
+</template>
+
+<template id="tplInstructions">
+  <div class="pd-dialog-inner">
+    <h2>Special instructions</h2>
+    <textarea name="instruction" rows="5"></textarea>
+    <div class="pd-dialog-actions">
+      <button type="button" class="divButton" data-dialog="save">Save</button>
+      <button type="button" class="divButton" data-dialog="close">Cancel</button>
+    </div>
+  </div>
+</template>
+
+<template id="tplInternalNotes">
+  <div class="pd-dialog-inner">
+    <h2>Internal notes</h2>
+    <p class="pd-small-print">Manifest comments for in-house bridal. Not shown to the customer.</p>
+    <label>Comment 1 <input type="text" name="manifest4InHouseBridal_comment1"></label>
+    <label>Comment 2 <input type="text" name="manifest4InHouseBridal_comment2"></label>
+    <label>Comment 3 <input type="text" name="manifest4InHouseBridal_comment3"></label>
+    <label>Comment 4 <input type="text" name="manifest4InHouseBridal_comment4"></label>
+    <label>Comment 5 <input type="text" name="manifest4InHouseBridal_comment5"></label>
+    <div class="pd-dialog-actions">
+      <button type="button" class="divButton" data-dialog="save">Save</button>
+      <button type="button" class="divButton" data-dialog="close">Cancel</button>
+    </div>
+  </div>
+</template>
+
+<div class="pd-toast" id="pdToast" hidden></div>
+
+<script src="js/product-details.js"></script>
+</body>
+</html>
