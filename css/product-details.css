@@ -182,6 +182,8 @@
 .pd-inline-fields select { width: auto; }
 .pd-static { padding: 4px 0; display: inline-block; }
 .pd-small-print { font-size: 10px; }
+.pd-th-wrap { white-space: normal !important; width: 110px; }
+.pd-setting-note { margin-top: 3px; font-size: 10px; font-weight: bold; color: var(--cr-red); }
 
 /* mounted / unmounted radios */
 .pd-mounted { margin: 6px 0 2px; display: flex; gap: 20px; }
