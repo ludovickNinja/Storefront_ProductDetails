@@ -284,6 +284,16 @@
                 *Please be advised that our range tolerances are very strict, if your stone does not fit within one of the listed ranges please choose Custom Size and follow the steps.
               </td>
             </tr>
+            <tr>
+              <th class="pd-th-wrap">Sending Center Stone for Setting</th>
+              <td>
+                <select name="sendingStoneForSetting" class="selectBox">
+                  <option value="No" selected>No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+                <div class="pd-setting-note">$80 setting fee applies when we set your center stone</div>
+              </td>
+            </tr>
           </table>
 
           <div class="pd-custom-info" id="pdCustomInfo" hidden>
@@ -338,6 +348,7 @@
         <div class="pd-fee blue" data-bind="oversizeFee"></div>
         <div class="pd-fee blue" data-bind="centerStoneLine"></div>
         <div class="pd-fee blue" data-bind="stoneOversizeFeeLine"></div>
+        <div class="pd-fee blue" data-bind="settingFeeLine"></div>
         <div class="pd-fee blue" data-bind="engravingFeeLine"></div>
         <div class="pd-fee blue" data-bind="customizationFeeLine"></div>
 

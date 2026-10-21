@@ -37,8 +37,9 @@ under the total instead. Center stone size changes are not in the menu since
 that fee already comes from the carat weight of the center stone provided.
 
 Total Wholesale Price = ring wholesale price + ring oversize/undersize fee
-+ lab center stone (fully mounted only) + stone oversize fee + engraving fee
-+ customization fees.
++ lab center stone (fully mounted only) + stone oversize fee + center stone
+setting fee ($80 when "Sending Center Stone for Setting" is Yes, unmounted
+only) + engraving fee + customization fees.
 
 SPIFF salespersons and the "add to list" lists are hard-coded sample data.
 
