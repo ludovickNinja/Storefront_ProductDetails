@@ -1,0 +1,176 @@
+/* ------------------------------------------------------------------
+   Storefront chrome: page reset, header, footer, shared buttons.
+   Mirrors the B2B site's look closely enough to frame the detail window.
+   ------------------------------------------------------------------ */
+
+:root {
+  --cr-dark: #484848;
+  --cr-darker: #333;
+  --cr-black: #000;
+  --cr-text: #222;
+  --cr-muted: #777;
+  --cr-border: #ccc;
+  --cr-rule: #aaa;
+  --cr-blue: #0066cc;
+  --cr-red: #990000;
+  --cr-gold: #ded3b2;
+  --cr-font: Arial, Helvetica, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  position: relative;
+  background: #fff;
+  color: var(--cr-text);
+  font: 12px/1.4 var(--cr-font);
+}
+
+a { color: inherit; }
+a.blue, .blue, a.blue:hover { color: var(--cr-blue); }
+.bold { font-weight: bold; }
+.cap { text-transform: capitalize; }
+
+img { max-width: 100%; }
+
+/* ---- generic buttons used on the live site ---- */
+.divButton {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid #a8a8a8;
+  border-radius: 5px;
+  background: #f0f0f0;
+  font: inherit;
+  font-weight: bold;
+  color: var(--cr-text);
+  cursor: pointer;
+  text-decoration: none;
+}
+.divButton:hover { background: #e4e4e4; }
+.divButton.blue { color: var(--cr-blue); font-weight: normal; background: #fff; }
+
+.linkish {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.linkish:hover { text-decoration: underline; }
+
+select.selectBox,
+.selectBox {
+  width: 100%;
+  padding: 4px 26px 4px 6px;
+  border: 1px solid #a8a8a8;
+  border-radius: 5px;
+  background: #fff url("../assets/images/icons/selectTag_downArrow.png") no-repeat right 8px center;
+  font: inherit;
+  color: var(--cr-text);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* ---- header ---- */
+.header_wrapper {
+  background: var(--cr-dark);
+  color: #fff;
+}
+.header_wrapper .heading {
+  width: 965px;
+  margin: 0 auto;
+  padding: 6px 0 18px;
+  position: relative;
+}
+.tagline {
+  text-align: right;
+  font-size: 11px;
+  color: #bbb;
+}
+.header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  margin-top: 4px;
+}
+.logo img { height: 22px; display: block; margin-top: 10px; }
+.search { position: relative; }
+.search-box {
+  display: flex;
+  align-items: center;
+  width: 195px;
+  height: 36px;
+  padding: 0 6px 0 10px;
+  background: #fff;
+  border-radius: 3px;
+}
+.search-box input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  color: #999;
+  outline: none;
+}
+.search-box button { background: none; border: 0; padding: 0; cursor: pointer; }
+.search-links {
+  position: absolute;
+  left: 0;
+  bottom: -18px;
+  white-space: nowrap;
+  font-size: 10px;
+  color: #ccc;
+}
+.search-links span { text-decoration: underline; cursor: pointer; }
+.menu_main { margin-left: auto; margin-top: 10px; }
+.menu_main ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 10px; }
+.menu_main a {
+  color: #fff;
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+.white_wrapper { background: #fff; }
+.menu_top {
+  list-style: none;
+  width: 965px;
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+}
+.menu_top li {
+  flex: 1;
+  background: var(--cr-dark);
+  padding: 8px 0;
+  text-align: center;
+  margin-right: 1px;
+}
+.menu_top li.wide { flex: 1.5; }
+.menu_top li:hover { background: var(--cr-black); }
+.menu_top a { color: #fff; text-decoration: none; text-transform: uppercase; font-size: 11px; }
+
+/* ---- page body ---- */
+.contents { min-height: 1100px; }
+.content_wrapper { width: 965px; margin: 0 auto; padding: 20px 0; }
+.poc-note { color: var(--cr-muted); font-size: 11px; }
+.poc-note code { font-size: 11px; }
+
+/* ---- footer ---- */
+.footer_wrapper { background: var(--cr-dark); color: #ccc; }
+.footer {
+  width: 965px;
+  margin: 0 auto;
+  padding: 14px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+.social a { margin-left: 8px; }
+.social img { vertical-align: middle; }
