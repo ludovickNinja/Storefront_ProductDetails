@@ -35,8 +35,8 @@ fee guide with its fee (`defaultCatalogue` in the script). The title bar
 "menu" opens **Customization settings**, an editor for the categories, the
 customizations in each, their fee (flat, complimentary or quote required)
 and the reference-only flag. Edits are saved in the browser's localStorage
-and "Reset to fee guide" returns to the defaults. "Close window" lives in
-the same menu. Flat fees
+and "Reset to fee guide" returns to the defaults. The window has no close
+control; the POC always shows it. Flat fees
 are added to the Total Wholesale Price; "Quote required" items are flagged
 under the total instead. Items flagged `reference: true` (Retipping prongs)
 are listed with their fee but cannot be selected. Center stone size changes

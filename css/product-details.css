@@ -36,7 +36,6 @@
 }
 .pd-titlebar a { color: inherit; text-decoration: none; }
 .pd-titlebar-actions { display: flex; align-items: center; gap: 15px; }
-.pd-titlebar-actions .pd-x { font-weight: bolder; }
 
 /* title bar menu */
 .pd-menu { position: relative; }
@@ -74,7 +73,6 @@
   cursor: pointer;
 }
 .pd-menu-list button:hover { background: #3399ff; color: #fff; }
-.pd-menu-sep { margin: 4px 0; border-top: 1px solid #ddd; }
 
 .pd-body {
   display: flex;

@@ -935,10 +935,6 @@
     if (el.dataset.action === 'menu') { e.stopPropagation(); toggleMenu(); return; }
     closeMenu();
     switch (el.dataset.action) {
-      case 'close':
-        $('#pdOverlay').hidden = true;
-        $('#btnReopen').hidden = false;
-        break;
       case 'catalogue-editor': openCatalogueEditor(); break;
       case 'catalogue-reset':
         if (confirm('Reset all categories and customizations to the internal wholesale fee guide?')) {
@@ -962,10 +958,6 @@
         if (!state.spiff) openSpiff(true); else addToCart();
         break;
     }
-  });
-  $('#btnReopen').addEventListener('click', () => {
-    $('#pdOverlay').hidden = false;
-    $('#btnReopen').hidden = true;
   });
 
   /* ---------------- boot ---------------- */
