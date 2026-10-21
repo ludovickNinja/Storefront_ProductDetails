@@ -33,6 +33,7 @@
     shape: { value: '1', label: 'Round', img: 'assets/images/diamond-shapes/round.jpg' },
     diamondSize: { value: '1', label: '1.00', range: 'Range in mm 6.3 to 6.5' },
     customStone: null,                     // {shape, weight, L, W, D, type, note}
+    sendingStoneForSetting: 'No',          // Unmounted only; 'Yes' adds the setting fee
     fullyMounted: { shapeID: '1', weight: 1, price: 220.22 },
     engraving: null,                       // {outside:{text,font}, inside:{text,font}, notes}
     customizations: { ids: [], notes: '' },// ids from customizationCatalogue
@@ -126,7 +127,6 @@
     { group: 'Services', items: [
       { id: 'nickel-free',  name: 'Nickel-free white gold', fee: 150 },
       { id: 'soldering',    name: 'Soldering', hint: 'per ring', fee: 50 },
-      { id: 'set-stone',    name: 'Setting your center stone', fee: 80 },
       { id: 'retip-prongs', name: 'Retipping prongs', fee: 100 }
     ]},
     { group: 'Add-ons', items: [
@@ -148,6 +148,8 @@
 
   /* ---------------- MOCK server rules ---------------- */
   const mock = {
+    // Fee guide, Services: "Setting your center stone $80".
+    centerStoneSettingFee: 80,
     ringOversizeFee(size) {
       const s = parseFloat(size);
       if (s >= 11) return 50;
@@ -218,10 +220,11 @@
       ringOversize: mock.ringOversizeFee(state.size),
       centerStone: 0,          // fully-mounted lab center: stone + setting
       stoneOversize: 0,
+      setting: 0,              // we set the customer's center stone
       engraving: engravingFee(),
       customizations: 0,
       quotes: 0,
-      lines: { oversize: '', centerStone: '', stoneOversize: '', engraving: '', customizations: '' }
+      lines: { oversize: '', centerStone: '', stoneOversize: '', setting: '', engraving: '', customizations: '' }
     };
     if (b.ringOversize > 0) b.lines.oversize = `Ring Oversize Fee: $${money(b.ringOversize)}`;
     if (b.ringOversize < 0) b.lines.oversize = `Ring Undersize Fee: $${money(b.ringOversize)}`;
@@ -230,8 +233,12 @@
       b.centerStone = state.fullyMounted.price + 0; // setting price: complimentary
       b.lines.centerStone = `Lab Center Stone: $${money(b.centerStone)} (setting complimentary)`;
       b.stoneOversize = mock.stoneOversizeFee(state.fullyMounted.weight);
-    } else if (state.customStone) {
-      b.stoneOversize = mock.stoneOversizeFee(state.customStone.weight);
+    } else {
+      if (state.customStone) b.stoneOversize = mock.stoneOversizeFee(state.customStone.weight);
+      if (state.sendingStoneForSetting === 'Yes') {
+        b.setting = mock.centerStoneSettingFee;
+        b.lines.setting = `Center Stone Setting Fee: $${money(b.setting)}`;
+      }
     }
     if (b.stoneOversize > 0) b.lines.stoneOversize = `Stone Oversize Fee: $${money(b.stoneOversize)}`;
     if (b.engraving > 0) b.lines.engraving = `Engraving Fee: $${money(b.engraving)}`;
@@ -241,7 +248,7 @@
     b.quotes = cz.quotes;
     if (cz.fees > 0) b.lines.customizations = `Customization Fees: $${money(cz.fees)}`;
 
-    b.total = b.base + b.ringOversize + b.centerStone + b.stoneOversize + b.engraving + b.customizations;
+    b.total = b.base + b.ringOversize + b.centerStone + b.stoneOversize + b.setting + b.engraving + b.customizations;
     return b;
   }
 
@@ -260,6 +267,7 @@
     bind('oversizeFee', pb.lines.oversize);
     bind('centerStoneLine', pb.lines.centerStone);
     bind('stoneOversizeFeeLine', pb.lines.stoneOversize);
+    bind('settingFeeLine', pb.lines.setting);
     bind('engravingFeeLine', pb.lines.engraving);
     bind('customizationFeeLine', pb.lines.customizations);
     bind('total', money(pb.total));
@@ -702,6 +710,10 @@
   });
   form.size.addEventListener('change', e => { state.size = e.target.value; render(); });
   form.qty.addEventListener('change', e => { state.qty = parseInt(e.target.value, 10); });
+  form.sendingStoneForSetting.addEventListener('change', e => {
+    state.sendingStoneForSetting = e.target.value;
+    render();
+  });
   form.variation.addEventListener('change', e => {
     state.variation = e.target.value.includes('-Lab-') ? 'Lab' : '';
     render();
