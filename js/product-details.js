@@ -33,7 +33,7 @@
     shape: { value: '1', label: 'Round', img: 'assets/images/diamond-shapes/round.jpg' },
     diamondSize: { value: '1', label: '1.00', range: 'Range in mm 6.3 to 6.5' },
     customStone: null,                     // {shape, weight, L, W, D, type, note}
-    fullyMounted: { sizeID: '701', weight: 1, price: 220.22 },
+    fullyMounted: { shapeID: '1', weight: 1, price: 220.22 },
     engraving: null,                       // {outside:{text,font}, inside:{text,font}, notes}
     spiff: '',
     instructions: '',
@@ -42,6 +42,37 @@
     images: [
       'assets/images/products/B001-01YA.jpg'
     ]
+  };
+
+  /* ---------------- fully-mounted lab center catalogue ---------------- */
+  // Live site: stoneSizeID options come from productEdit_act.asp per shape.
+  // Label format: "IGI Certified - 1.00ct DE (R: 1.40-1.47)", R = length to
+  // width ratio range for the shape. Every shape goes 1.00 to 5.00 ct.
+  // Prices are MOCK except 1.00 ct Round.
+  const labCenter = {
+    sizes: [
+      { ct: 1,   price: 220.22 },
+      { ct: 1.5, price: 410.00 },
+      { ct: 2,   price: 690.00 },
+      { ct: 2.5, price: 980.00 },
+      { ct: 3,   price: 1350.00 },
+      { ct: 3.5, price: 1780.00 },
+      { ct: 4,   price: 2250.00 },
+      { ct: 5,   price: 3400.00 }
+    ],
+    shapes: {
+      '1':  { name: 'Round',             ratio: '1.00-1.01' },
+      '16': { name: 'Oval',              ratio: '1.42-1.52' },
+      '70': { name: 'Elongated Cushion', ratio: '1.30-1.45' },
+      '5':  { name: 'Emerald',           ratio: '1.38-1.52' },
+      '21': { name: 'Marquise',          ratio: '1.90-2.05' },
+      '23': { name: 'Pear',              ratio: '1.55-1.72' },
+      '2':  { name: 'Princess',          ratio: '1.00-1.03' },
+      '18': { name: 'Radiant',           ratio: '1.40-1.47' }
+    },
+    label(shapeID, ct) {
+      return `IGI Certified - ${ct.toFixed(2)}ct DE (R: ${this.shapes[shapeID].ratio})`;
+    }
   };
 
   /* ---------------- MOCK server rules ---------------- */
@@ -215,6 +246,24 @@
     }
     const qty = $('#pdQty');
     for (let q = 1; q <= 30; q++) qty.add(new Option(q, q));
+  }
+
+  // Rebuild the fully-mounted size list for the selected shape, keeping the
+  // current carat weight when that shape offers it.
+  function fillStoneSizes() {
+    const shapeID = form.stoneShapeID.value;
+    const sel = form.stoneSizeID;
+    const keep = state.fullyMounted.weight;
+    sel.innerHTML = '';
+    labCenter.sizes.forEach(x => {
+      const o = new Option(labCenter.label(shapeID, x.ct), String(x.ct), false, x.ct === keep);
+      o.dataset.weight = x.ct;
+      o.dataset.price = x.price;
+      sel.add(o);
+    });
+    if (sel.selectedIndex < 0) sel.selectedIndex = 0;
+    const o = sel.selectedOptions[0];
+    state.fullyMounted = { shapeID, weight: parseFloat(o.dataset.weight), price: parseFloat(o.dataset.price) };
   }
 
   /* ---------------- custom dropdowns ---------------- */
@@ -501,9 +550,10 @@
     state.mounted = e.target.value;
     render();
   }));
+  form.stoneShapeID.addEventListener('change', () => { fillStoneSizes(); render(); });
   form.stoneSizeID.addEventListener('change', e => {
     const o = e.target.selectedOptions[0];
-    state.fullyMounted = { sizeID: o.value, weight: parseFloat(o.dataset.weight), price: parseFloat(o.dataset.price) };
+    state.fullyMounted = { shapeID: form.stoneShapeID.value, weight: parseFloat(o.dataset.weight), price: parseFloat(o.dataset.price) };
     render();
   });
 
@@ -558,6 +608,7 @@
 
   /* ---------------- boot ---------------- */
   fillSelects();
+  fillStoneSizes();
   render();
 
   // expose for console poking during the POC

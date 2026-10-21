@@ -26,7 +26,7 @@ plain functions in `js/product-details.js` under `mock`:
 
 - ring oversize / undersize fee by size
 - stone oversize fee by carat weight (from the internal wholesale fee guide: complimentary under 3.50 ct, $180 for 3.50 to 4.99 ct, $250 for 5.00 to 6.99 ct, $350 for 7.00 ct and up)
-- fully-mounted stone price per size option
+- fully-mounted lab center sizes per shape (IGI Certified labels with the shape's ratio range, 1.00 to 5.00 ct) and their prices
 - estimated ship date from the date needed
 - SKU rewrite when metal, diamond size or variation changes
 
