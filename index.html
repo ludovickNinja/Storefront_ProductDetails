@@ -88,7 +88,15 @@
   <div class="pd-titlebar">
     <div>Item #: <span data-bind="sku">B001-01YM-100A</span></div>
     <div class="pd-titlebar-actions">
-      <a href="#" data-action="close">close window</a>
+      <div class="pd-menu">
+        <button type="button" class="pd-menu-toggle" data-action="menu" aria-haspopup="true" aria-expanded="false">menu &#9662;</button>
+        <div class="pd-menu-list" hidden>
+          <button type="button" data-action="catalogue-editor">Customization settings&hellip;</button>
+          <button type="button" data-action="catalogue-reset">Reset customizations to fee guide</button>
+          <div class="pd-menu-sep"></div>
+          <button type="button" data-action="close">Close window</button>
+        </div>
+      </div>
       <a href="#" data-action="close" class="pd-x">X</a>
     </div>
   </div>
@@ -508,6 +516,20 @@
         <button type="button" class="divButton" data-dialog="clear">Clear all</button>
         <button type="button" class="divButton" data-dialog="close">Cancel</button>
       </div>
+    </div>
+  </div>
+</template>
+
+<template id="tplCatalogueEditor">
+  <div class="pd-dialog-inner pd-dialog-inner--wide pd-ce">
+    <h2>Customization settings</h2>
+    <p class="pd-small-print">Set up the categories shown in the Customize menu, the customizations in each and their fees. A customization marked <strong>Reference</strong> is listed with its fee but cannot be selected. Settings are kept in this browser; Reset returns to the internal wholesale fee guide.</p>
+    <div class="pd-ce-groups"></div>
+    <button type="button" class="divButton pd-ce-add-group" data-ce="add-group">+ Add category</button>
+    <div class="pd-dialog-actions">
+      <button type="button" class="divButton" data-dialog="save">Save</button>
+      <button type="button" class="divButton" data-dialog="reset">Reset to fee guide</button>
+      <button type="button" class="divButton" data-dialog="close">Cancel</button>
     </div>
   </div>
 </template>
