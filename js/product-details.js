@@ -36,7 +36,7 @@
     sendingStoneForSetting: 'No',          // Unmounted only; 'Yes' adds the setting fee
     fullyMounted: { shapeID: '1', weight: 1, price: 220.22 },
     engraving: null,                       // {outside:{text,font}, inside:{text,font}, notes}
-    customizations: { ids: [], notes: '' },// ids from customizationCatalogue
+    customizations: { ids: [], notes: '' },// ids from the live catalogue
     spiff: '',
     instructions: '',
     internalNotes: ['', '', '', '', ''],
@@ -80,9 +80,10 @@
   /* ---------------- customization catalogue ---------------- */
   // Internal wholesale fee guide (CAD). fee: number = flat fee, 0 =
   // complimentary, 'quote' = quote required (not included in the total).
+  // reference: true lists the item with its fee but it cannot be selected.
   // Center stone size/shape changes are not listed here: that fee is
   // already applied from the carat weight of the center stone provided.
-  const customizationCatalogue = [
+  const defaultCatalogue = [
     { group: 'Head / Prongs', items: [
       { id: 'prong-count',     name: 'Change number of prongs', fee: 0 },
       { id: 'prong-type',      name: 'Change prong type', fee: 0 },
@@ -127,20 +128,53 @@
     { group: 'Services', items: [
       { id: 'nickel-free',  name: 'Nickel-free white gold', fee: 150 },
       { id: 'soldering',    name: 'Soldering', hint: 'per ring', fee: 50 },
-      { id: 'retip-prongs', name: 'Retipping prongs', fee: 100 }
+      { id: 'retip-prongs', name: 'Retipping prongs', fee: 100, reference: true }
     ]},
     { group: 'Add-ons', items: [
       { id: 'travel-ring', name: 'Silver/CZ travel ring', hint: 'complimentary with an Atelier ER purchase', fee: 200 }
     ]}
   ];
-  const customizationById = {};
-  customizationCatalogue.forEach(g => g.items.forEach(i => { customizationById[i.id] = i; }));
+
+  // Live catalogue: the fee guide by default, or the version saved from the
+  // title-bar "Customization settings" editor (this browser only).
+  const CATALOGUE_KEY = 'pd.customizationCatalogue';
+  let customizationCatalogue = [];
+  let customizationById = {};
+
+  function setCatalogue(groups) {
+    customizationCatalogue = groups;
+    customizationById = {};
+    groups.forEach(g => g.items.forEach(i => { customizationById[i.id] = i; }));
+    // drop selections that no longer exist
+    state.customizations.ids = state.customizations.ids.filter(id => customizationById[id] && !customizationById[id].reference);
+  }
+  function cloneCatalogue(groups) {
+    return groups.map(g => ({ group: g.group, items: g.items.map(i => Object.assign({}, i)) }));
+  }
+  function loadCatalogue() {
+    try {
+      const raw = localStorage.getItem(CATALOGUE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) { /* storage unavailable: fall back to the fee guide */ }
+    return cloneCatalogue(defaultCatalogue);
+  }
+  function saveCatalogue(groups) {
+    try { localStorage.setItem(CATALOGUE_KEY, JSON.stringify(groups)); } catch (e) { /* ignore */ }
+  }
+  function resetCatalogue() {
+    try { localStorage.removeItem(CATALOGUE_KEY); } catch (e) { /* ignore */ }
+    setCatalogue(cloneCatalogue(defaultCatalogue));
+  }
+  setCatalogue(loadCatalogue());
 
   function customizationTotals(ids) {
     let fees = 0, quotes = 0;
     ids.forEach(id => {
       const item = customizationById[id];
-      if (!item) return;
+      if (!item || item.reference) return;
       if (item.fee === 'quote') quotes++; else fees += item.fee;
     });
     return { fees, quotes, count: ids.length };
@@ -404,8 +438,25 @@
       onPick(li);
     });
   }
-  function closeDropdowns() { $$('.pd-dd-list').forEach(l => { l.hidden = true; }); }
+  function closeDropdowns() {
+    $$('.pd-dd-list').forEach(l => { l.hidden = true; });
+    closeMenu();
+  }
   document.addEventListener('click', closeDropdowns);
+
+  function closeMenu() {
+    const list = $('.pd-menu-list');
+    if (!list) return;
+    list.hidden = true;
+    $('.pd-menu-toggle').setAttribute('aria-expanded', 'false');
+  }
+  function toggleMenu() {
+    const list = $('.pd-menu-list');
+    const open = list.hidden;
+    closeDropdowns();
+    list.hidden = !open;
+    $('.pd-menu-toggle').setAttribute('aria-expanded', String(open));
+  }
 
   /* ---------------- dialogs ---------------- */
   const backdrop = $('#pdDialogBackdrop');
@@ -569,10 +620,18 @@
           ${g.items.map(it => {
             const feeTxt = it.fee === 'quote' ? 'Quote required' : (it.fee > 0 ? '$' + money(it.fee) : 'Complimentary');
             const feeCls = it.fee === 'quote' ? 'is-quote' : (it.fee > 0 ? '' : 'is-free');
+            const hint = it.hint ? ` <span class="pd-cz-hint">(${esc(it.hint)})</span>` : '';
+            if (it.reference) {
+              return `<div class="pd-cz-row pd-cz-row--reference" title="For reference only">
+                <span class="pd-cz-ref-mark" aria-hidden="true"></span>
+                <span class="pd-cz-name">${esc(it.name)}${hint} <span class="pd-cz-hint">(reference only)</span></span>
+                <span class="pd-cz-fee ${feeCls}">${feeTxt}</span>
+              </div>`;
+            }
             const checked = state.customizations.ids.includes(it.id);
             return `<label class="pd-cz-row${checked ? ' is-checked' : ''}">
               <input type="checkbox" name="cz" value="${it.id}"${checked ? ' checked' : ''}>
-              <span class="pd-cz-name">${esc(it.name)}${it.hint ? ` <span class="pd-cz-hint">(${esc(it.hint)})</span>` : ''}</span>
+              <span class="pd-cz-name">${esc(it.name)}${hint}</span>
               <span class="pd-cz-fee ${feeCls}">${feeTxt}</span>
             </label>`;
           }).join('')}
@@ -586,7 +645,7 @@
         bind('czCount', t.count);
         bind('czFees', money(t.fees));
         bind('czQuote', t.quotes ? `+ ${t.quotes} quote required` : '');
-        $$('.pd-cz-row', d).forEach(r => r.classList.toggle('is-checked', $('input', r).checked));
+        $$('label.pd-cz-row', d).forEach(r => r.classList.toggle('is-checked', $('input', r).checked));
       };
       list.addEventListener('change', tally);
       tally();
@@ -601,6 +660,126 @@
           $$('[name=cz]', d).forEach(c => { c.checked = false; });
           notes.value = '';
           tally();
+        }
+      };
+    });
+  }
+
+  /* ---- customization settings editor ---- */
+  function openCatalogueEditor() {
+    openDialog('tplCatalogueEditor', d => {
+      const groupsEl = $('.pd-ce-groups', d);
+
+      // new rows start as "Flat fee" with an empty amount so a price can be typed straight away
+      const feeType = it => it.isNew ? 'fee' : (it.fee === 'quote' ? 'quote' : (it.fee > 0 ? 'fee' : 'free'));
+      const rowHtml = it => `
+        <tr data-id="${esc(it.id || '')}"${it.reference ? ' class="is-reference"' : ''}>
+          <td class="pd-ce-col-name"><input type="text" name="name" value="${esc(it.name || '')}" placeholder="Customization"></td>
+          <td class="pd-ce-col-hint"><input type="text" name="hint" value="${esc(it.hint || '')}" placeholder="Hint (optional)"></td>
+          <td class="pd-ce-col-type">
+            <select name="feeType">
+              <option value="fee"${feeType(it) === 'fee' ? ' selected' : ''}>Flat fee</option>
+              <option value="free"${feeType(it) === 'free' ? ' selected' : ''}>Complimentary</option>
+              <option value="quote"${feeType(it) === 'quote' ? ' selected' : ''}>Quote required</option>
+            </select>
+          </td>
+          <td class="pd-ce-col-amt"><input type="number" name="amount" min="0" step="1" value="${feeType(it) === 'fee' && !it.isNew ? it.fee : ''}"${feeType(it) === 'fee' ? '' : ' disabled'}></td>
+          <td class="pd-ce-col-ref"><input type="checkbox" name="reference" title="Reference only"${it.reference ? ' checked' : ''}></td>
+          <td class="pd-ce-col-del"><button type="button" class="pd-ce-btn pd-ce-btn--danger" data-ce="del-item" title="Remove">&times;</button></td>
+        </tr>`;
+      const groupHtml = g => `
+        <div class="pd-ce-group">
+          <div class="pd-ce-group-head">
+            <input type="text" name="group" value="${esc(g.group)}" placeholder="Category name">
+            <button type="button" class="pd-ce-btn" data-ce="up" title="Move up">&#9650;</button>
+            <button type="button" class="pd-ce-btn" data-ce="down" title="Move down">&#9660;</button>
+            <button type="button" class="pd-ce-btn pd-ce-btn--danger" data-ce="del-group">Remove category</button>
+          </div>
+          <table class="pd-ce-items">
+            <thead><tr><th>Customization</th><th>Hint</th><th>Fee</th><th>Amount ($)</th><th title="Reference only">Ref.</th><th></th></tr></thead>
+            <tbody>${g.items.map(rowHtml).join('')}</tbody>
+          </table>
+          <button type="button" class="pd-ce-btn pd-ce-add-item" data-ce="add-item">+ Add customization</button>
+        </div>`;
+      const draw = groups => { groupsEl.innerHTML = groups.map(groupHtml).join('') || '<div class="pd-ce-empty">No categories yet.</div>'; };
+      draw(customizationCatalogue);
+
+      // editing actions
+      d.addEventListener('click', e => {
+        const btn = e.target.closest('[data-ce]');
+        if (!btn) return;
+        const group = btn.closest('.pd-ce-group');
+        switch (btn.dataset.ce) {
+          case 'add-group':
+            if ($('.pd-ce-empty', groupsEl)) groupsEl.innerHTML = '';
+            groupsEl.insertAdjacentHTML('beforeend', groupHtml({ group: '', items: [] }));
+            $('.pd-ce-group:last-child input[name=group]', groupsEl).focus();
+            break;
+          case 'del-group':
+            if (group.querySelectorAll('tbody tr').length === 0 || confirm('Remove this category and its customizations?')) group.remove();
+            break;
+          case 'up': if (group.previousElementSibling) group.parentNode.insertBefore(group, group.previousElementSibling); break;
+          case 'down': if (group.nextElementSibling) group.parentNode.insertBefore(group.nextElementSibling, group); break;
+          case 'add-item': {
+            const tb = $('tbody', group);
+            tb.insertAdjacentHTML('beforeend', rowHtml({ id: '', name: '', fee: 0, isNew: true }));
+            $('tr:last-child input[name=name]', tb).focus();
+            break;
+          }
+          case 'del-item': btn.closest('tr').remove(); break;
+        }
+      });
+      d.addEventListener('change', e => {
+        const t = e.target;
+        if (t.name === 'feeType') {
+          const amt = $('[name=amount]', t.closest('tr'));
+          amt.disabled = t.value !== 'fee';
+          if (t.value !== 'fee') amt.value = ''; else if (!amt.value) amt.value = '0';
+        }
+        if (t.name === 'reference') t.closest('tr').classList.toggle('is-reference', t.checked);
+      });
+
+      // read the DOM back into catalogue data
+      const slug = str => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'item';
+      const collect = () => {
+        const used = new Set();
+        const groups = [];
+        $$('.pd-ce-group', groupsEl).forEach(g => {
+          const name = $('[name=group]', g).value.trim();
+          const items = [];
+          $$('tbody tr', g).forEach(tr => {
+            const itName = $('[name=name]', tr).value.trim();
+            if (!itName) return;
+            let id = tr.dataset.id || slug(itName);
+            while (used.has(id)) id += '-2';
+            used.add(id);
+            const type = $('[name=feeType]', tr).value;
+            const it = { id, name: itName };
+            const hint = $('[name=hint]', tr).value.trim();
+            if (hint) it.hint = hint;
+            it.fee = type === 'quote' ? 'quote' : (type === 'fee' ? (parseFloat($('[name=amount]', tr).value) || 0) : 0);
+            if ($('[name=reference]', tr).checked) it.reference = true;
+            items.push(it);
+          });
+          if (name || items.length) groups.push({ group: name || 'Untitled', items });
+        });
+        return groups;
+      };
+
+      return {
+        save() {
+          const groups = collect();
+          saveCatalogue(groups);
+          setCatalogue(groups);
+          closeDialog();
+          render();
+          toast('Customization settings saved');
+        },
+        reset() {
+          if (!confirm('Reset all categories and customizations to the internal wholesale fee guide?')) return;
+          resetCatalogue();
+          draw(customizationCatalogue);
+          render();
         }
       };
     });
@@ -753,10 +932,16 @@
     const el = e.target.closest('[data-action]');
     if (!el) return;
     e.preventDefault();
+    if (el.dataset.action === 'menu') { e.stopPropagation(); toggleMenu(); return; }
+    closeMenu();
     switch (el.dataset.action) {
-      case 'close':
-        $('#pdOverlay').hidden = true;
-        $('#btnReopen').hidden = false;
+      case 'catalogue-editor': openCatalogueEditor(); break;
+      case 'catalogue-reset':
+        if (confirm('Reset all categories and customizations to the internal wholesale fee guide?')) {
+          resetCatalogue();
+          render();
+          toast('Customizations reset to the fee guide');
+        }
         break;
       case 'enlarge': openLightbox($('#pdMainImage').getAttribute('src')); break;
       case 'shipping-date': openShippingDate(); break;
@@ -774,10 +959,6 @@
         break;
     }
   });
-  $('#btnReopen').addEventListener('click', () => {
-    $('#pdOverlay').hidden = false;
-    $('#btnReopen').hidden = true;
-  });
 
   /* ---------------- boot ---------------- */
   fillSelects();
@@ -786,5 +967,6 @@
 
   // expose for console poking during the POC
   window.pdState = state;
+  window.pdCatalogue = () => customizationCatalogue;
   window.pdRender = render;
 })();

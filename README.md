@@ -30,11 +30,18 @@ plain functions in `js/product-details.js` under `mock`:
 - estimated ship date from the date needed
 - SKU rewrite when metal, diamond size or variation changes
 
-The Customize menu (`customizationCatalogue` in the script) lists every
-customization from the internal wholesale fee guide with its fee. Flat fees
+The Customize menu lists every customization from the internal wholesale
+fee guide with its fee (`defaultCatalogue` in the script). The title bar
+"menu" opens **Customization settings**, an editor for the categories, the
+customizations in each, their fee (flat, complimentary or quote required)
+and the reference-only flag. Edits are saved in the browser's localStorage
+and "Reset to fee guide" returns to the defaults. The window has no close
+control; the POC always shows it. Flat fees
 are added to the Total Wholesale Price; "Quote required" items are flagged
-under the total instead. Center stone size changes are not in the menu since
-that fee already comes from the carat weight of the center stone provided.
+under the total instead. Items flagged `reference: true` (Retipping prongs)
+are listed with their fee but cannot be selected. Center stone size changes
+are not in the menu since that fee already comes from the carat weight of
+the center stone provided.
 
 Total Wholesale Price = ring wholesale price + ring oversize/undersize fee
 + lab center stone (fully mounted only) + stone oversize fee + center stone
