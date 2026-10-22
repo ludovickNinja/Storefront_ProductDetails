@@ -164,10 +164,6 @@
   function saveCatalogue(groups) {
     try { localStorage.setItem(CATALOGUE_KEY, JSON.stringify(groups)); } catch (e) { /* ignore */ }
   }
-  function resetCatalogue() {
-    try { localStorage.removeItem(CATALOGUE_KEY); } catch (e) { /* ignore */ }
-    setCatalogue(cloneCatalogue(defaultCatalogue));
-  }
   setCatalogue(loadCatalogue());
 
   function customizationTotals(ids) {
@@ -774,12 +770,6 @@
           closeDialog();
           render();
           toast('Customization settings saved');
-        },
-        reset() {
-          if (!confirm('Reset all categories and customizations to the internal wholesale fee guide?')) return;
-          resetCatalogue();
-          draw(customizationCatalogue);
-          render();
         }
       };
     });
@@ -936,13 +926,6 @@
     closeMenu();
     switch (el.dataset.action) {
       case 'catalogue-editor': openCatalogueEditor(); break;
-      case 'catalogue-reset':
-        if (confirm('Reset all categories and customizations to the internal wholesale fee guide?')) {
-          resetCatalogue();
-          render();
-          toast('Customizations reset to the fee guide');
-        }
-        break;
       case 'enlarge': openLightbox($('#pdMainImage').getAttribute('src')); break;
       case 'shipping-date': openShippingDate(); break;
       case 'custom-stone': openCustomStone(); break;
