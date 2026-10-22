@@ -85,13 +85,16 @@
          data-base-sku="B001-01YM-100A" data-base-price="1104.96">
 
   <div class="pd-titlebar">
-    <div>Item #: <span data-bind="sku">B001-01YM-100A</span></div>
+    <div class="pd-titlebar-item">
+      <label for="pdSkuSwitch">Item #:</label>
+      <select id="pdSkuSwitch" class="pd-sku-switch" title="Switch product (POC)"></select>
+      <span class="pd-product-type" data-bind="productType"></span>
+    </div>
     <div class="pd-titlebar-actions">
       <div class="pd-menu">
         <button type="button" class="pd-menu-toggle" data-action="menu" aria-haspopup="true" aria-expanded="false">menu &#9662;</button>
         <div class="pd-menu-list" hidden>
           <button type="button" data-action="catalogue-editor">Customization settings&hellip;</button>
-          <button type="button" data-action="catalogue-reset">Reset customizations to fee guide</button>
         </div>
       </div>
     </div>
@@ -100,34 +103,14 @@
   <div class="pd-body">
 
     <!-- ---------- Thumbnails ---------- -->
-    <aside class="pd-thumbs">
-      <div class="pd-thumb is-active" data-image="assets/images/products/B001-01YA.jpg">
-        <img src="assets/images/products/B001-01YA.jpg" alt="B001-01YA main view">
-      </div>
-      <!-- Alternate views are not publicly served; drop the real files in and
-           replace the placeholders below. -->
-      <div class="pd-thumb pd-thumb--placeholder" data-image="" data-label="Alt view 1">
-        <span>Alt view 1</span>
-      </div>
-      <div class="pd-thumb pd-thumb--placeholder" data-image="" data-label="Alt view 2">
-        <span>Alt view 2</span>
-      </div>
-      <div class="pd-thumb pd-thumb--placeholder" data-image="" data-label="Alt view 3">
-        <span>Alt view 3</span>
-      </div>
-
-      <div class="pd-thumbs-heading">Matching band</div>
-      <a class="pd-thumb pd-thumb--link" href="#" data-sku="B001-01YM-100B" title="Open B001-01YM-100B">
-        <img src="assets/images/products/B001-01YB.jpg" alt="Matching band B001-01YB">
-      </a>
-    </aside>
+    <aside class="pd-thumbs" id="pdThumbs"></aside>
 
     <!-- ---------- Main image + shipping + contact ---------- -->
     <div class="pd-main">
       <div class="pd-image">
         <img id="pdMainImage" src="assets/images/products/B001-01YA.jpg" alt="B001-01YM-100A" data-action="enlarge">
       </div>
-      <div class="pd-finish">All High Polish</div>
+      <div class="pd-finish" data-bind="finish">All High Polish</div>
 
       <div class="pd-shipping">
         <div>
@@ -141,7 +124,7 @@
       <div class="pd-contact">
         <div>Don't see what you want??<br>Call 1-866-214-RING for information.</div>
         <div class="pd-contact-email">
-          <a href="mailto:service@crownring.com?subject=Custom%20Request%20for%20ring%20nbr%20B001-01YM-100A">
+          <a id="pdEmailLink" href="mailto:service@crownring.com?subject=Custom%20Request%20for%20ring%20nbr%20B001-01YM-100A">
             <img src="assets/images/icons/details_email.gif" alt="">
             Email a request for a custom quote about this ring
           </a>
@@ -166,7 +149,8 @@
 
       <div class="pd-sku-block">
         Item # <span data-bind="sku">B001-01YM-100A</span><span data-bind="skuSuffix">-C</span>
-        <div class="pd-collection">Noam Carver Bridal - Bridal</div>
+        <div class="pd-subtitle" data-bind="subtitle" hidden></div>
+        <div class="pd-collection" data-bind="collection">Noam Carver Bridal - Bridal</div>
       </div>
 
       <section class="pd-section">
@@ -186,7 +170,12 @@
                 <option value="3_2" data-code="YE">18K&nbsp;&nbsp;Yellow</option>
                 <option value="17_20" data-code="PL">Platinum 950</option>
               </select>
+              <strong class="pd-static" data-bind="metalFixed" hidden></strong>
             </td>
+          </tr>
+          <tr id="rowWidth" hidden>
+            <th>Width:</th>
+            <td><strong class="pd-static" data-bind="width"></strong></td>
           </tr>
           <tr>
             <th>Size:</th>
@@ -196,7 +185,7 @@
             <th>Qty:</th>
             <td><select name="qty" class="selectBox" id="pdQty"></select></td>
           </tr>
-          <tr>
+          <tr id="rowVariations">
             <th>Variations:</th>
             <td>
               <select name="variation" class="selectBox">
@@ -208,7 +197,7 @@
         </table>
       </section>
 
-      <section class="pd-section">
+      <section class="pd-section" id="pdCenterStone">
         <h3>Provide your center stone info</h3>
 
         <div class="pd-mounted">
@@ -312,14 +301,14 @@
         <h3>Diamond info <span class="pd-section-note blue">Diamond weights may vary</span></h3>
         <table class="pd-diamond-table">
           <tr>
-            <td>Type: <strong>Diamond</strong></td>
-            <td>Quantity: <strong>20</strong></td>
-            <td>Shape: <strong>RD</strong></td>
+            <td>Type: <strong data-bind="diType">Diamond</strong></td>
+            <td>Quantity: <strong data-bind="diQty">20</strong></td>
+            <td>Shape: <strong data-bind="diShape">RD</strong></td>
           </tr>
           <tr>
-            <td>TCW: <strong>0.24 Ct</strong></td>
-            <td>Colour: <strong>GH</strong></td>
-            <td>Quality: <strong>SI</strong></td>
+            <td>TCW: <strong data-bind="diTcw">0.24 Ct</strong></td>
+            <td>Colour: <strong data-bind="diColour">GH</strong></td>
+            <td>Quality: <strong data-bind="diQuality">SI</strong></td>
           </tr>
         </table>
       </section>
@@ -349,6 +338,7 @@
 
       <section class="pd-price">
         <div>Wholesale Price <strong>$<span data-bind="price">1,104.96</span></strong> CAD</div>
+        <div class="pd-oversize-note" data-bind="oversizeNote" hidden></div>
         <div class="pd-fee blue" data-bind="oversizeFee"></div>
         <div class="pd-fee blue" data-bind="centerStoneLine"></div>
         <div class="pd-fee blue" data-bind="stoneOversizeFeeLine"></div>
@@ -468,8 +458,8 @@
   <div class="pd-dialog-inner pd-dialog-inner--wide">
     <h2>Engraving</h2>
     <div class="pd-engrave-position">
-      <label><input type="checkbox" name="ngrv_pos" value="Outside"> Outside <small>($25.00)</small></label>
-      <label><input type="checkbox" name="ngrv_pos" value="Inside"> Inside <small>($15.00)</small></label>
+      <label><input type="checkbox" name="ngrv_pos" value="Outside"> Outside <small data-bind="ngrvOutsideFee">($25.00)</small></label>
+      <label><input type="checkbox" name="ngrv_pos" value="Inside"> Inside <small data-bind="ngrvInsideFee">($15.00)</small></label>
     </div>
     <div class="pd-engrave-block" data-pos="Outside" hidden>
       <h4>Outside</h4>
@@ -501,7 +491,7 @@
 
 <template id="tplCustomize">
   <div class="pd-dialog-inner pd-dialog-inner--wide pd-cz">
-    <h2>Customize this ring</h2>
+    <h2>Customize this <span data-bind="czProductType">ring</span></h2>
     <p class="pd-small-print">Fees from the internal wholesale fee guide. Items marked <em class="pd-cz-quote">Quote required</em> are sent to Head Office for pricing and are not included in the total.</p>
     <div class="pd-cz-list"></div>
     <label>Customization notes <textarea name="customizationNotes" rows="2" placeholder="e.g. 6 prongs, NS orientation, sizing beads at 6 and 12"></textarea></label>
@@ -519,12 +509,15 @@
 <template id="tplCatalogueEditor">
   <div class="pd-dialog-inner pd-dialog-inner--wide pd-ce">
     <h2>Customization settings</h2>
-    <p class="pd-small-print">Set up the categories shown in the Customize menu, the customizations in each and their fees. A customization marked <strong>Reference</strong> is listed with its fee but cannot be selected. Settings are kept in this browser; Reset returns to the internal wholesale fee guide.</p>
+    <p class="pd-small-print">Set up the product types, the categories shown in the Customize menu, the customizations in each and their fees. Each customization applies only to the product types ticked under <strong>Applies to</strong>. A customization marked <strong>Reference</strong> is listed with its fee but cannot be selected. Settings are kept in this browser.</p>
+    <div class="pd-ce-section-title">Product types</div>
+    <div class="pd-ce-types"></div>
+    <button type="button" class="pd-ce-btn pd-ce-add-type" data-ce="add-type">+ Add product type</button>
+    <div class="pd-ce-section-title">Categories and customizations</div>
     <div class="pd-ce-groups"></div>
     <button type="button" class="divButton pd-ce-add-group" data-ce="add-group">+ Add category</button>
     <div class="pd-dialog-actions">
       <button type="button" class="divButton" data-dialog="save">Save</button>
-      <button type="button" class="divButton" data-dialog="reset">Reset to fee guide</button>
       <button type="button" class="divButton" data-dialog="close">Cancel</button>
     </div>
   </div>

@@ -5,8 +5,12 @@
    mocked here in a single `state` object + a `render()` pass, so adding
    a feature means: add to state, add markup, extend render().
 
+   Products: the `products` table holds the items the POC can show; the
+   title-bar Item # switch moves between them. Each product has a type
+   (engagement ring, wedding band, ...) and customizations apply per type.
+
    Mocked server rules (search for "MOCK" to find them):
-     - ring oversize fee by size
+     - ring oversize fee by size (per product rule)
      - stone oversize fee by carat weight
      - fully-mounted stone price per size option
      - estimated ship date from date needed
@@ -21,10 +25,67 @@
   const win = $('#pdWindow');
   const form = $('#pdForm');
 
+  /* ---------------- product types ---------------- */
+  // Editable in the settings editor; each customization lists the types it
+  // applies to. Ids are stable, names are display only.
+  const defaultProductTypes = [
+    { id: 'engagement', name: 'Engagement Ring' },
+    { id: 'band',       name: 'Wedding Band' },
+    { id: 'stackable',  name: 'Stackable' },
+    { id: 'earrings',   name: 'Earrings' },
+    { id: 'necklace',   name: 'Necklace' }
+  ];
+
+  /* ---------------- products ---------------- */
+  // Data lifted from the live detail.asp pages for each item. Images that
+  // are not publicly served are null and render as placeholder tiles.
+  const products = {
+    'B001-01YM-100A': {
+      sku: 'B001-01YM-100A',
+      type: 'engagement',
+      subtitle: '',
+      collection: 'Noam Carver Bridal - Bridal',
+      images: ['assets/images/products/B001-01YA.jpg', null, null, null],
+      matchingBand: { sku: 'B001-01YM-100B', img: 'assets/images/products/B001-01YB.jpg' },
+      finish: 'All High Polish',
+      price: 1104.96,
+      metal: { options: true, selected: '2_2', code: 'YM' },
+      width: null,
+      sizes: { from: 1.5, to: 12, selected: '6.5' },
+      variations: true,
+      centerStone: true,
+      diamondInfo: { type: 'Diamond', qty: 20, shape: 'RD', tcw: '0.24 Ct', colour: 'GH', quality: 'SI' },
+      dateNeeded: '2026-11-18',
+      oversize: { kind: 'engagement' },
+      oversizeNote: '',
+      engravingFees: { outside: 25, inside: 15 }
+    },
+    'RYL-008RD6-M10': {
+      sku: 'RYL-008RD6-M10',
+      type: 'band',
+      subtitle: '2.2MM Thickness',
+      collection: 'Bleu Royale - Diamond',
+      images: ['assets/images/products/RYL-008RD6.jpg', 'assets/images/products/RYL-008RD6-alt1.jpg', 'assets/images/products/RYL-008RD6-alt2.jpg'],
+      matchingBand: null,
+      finish: 'Sandpaper Top',
+      price: 2396.52,
+      metal: { options: false, fixed: '14K' },
+      width: '6',
+      sizes: { from: 3, to: 16, selected: '10' },
+      variations: false,
+      centerStone: false,
+      diamondInfo: { type: 'Diamond', qty: 18, shape: 'RD', tcw: '0.16 Ct', colour: 'GH', quality: 'SI' },
+      dateNeeded: '2026-11-02',
+      oversize: { kind: 'perFullSize', fee: 30, above: 12.75 },
+      oversizeNote: 'An oversize fee of $30.00 per full size will apply if above 12.75',
+      engravingFees: { outside: 0, inside: 0 }   // live band page: engraving complimentary
+    }
+  };
+  const productTypeName = id => (productTypes.find(t => t.id === id) || { name: id }).name;
+
   /* ---------------- state ---------------- */
   const state = {
-    baseSku: win.dataset.baseSku,          // B001-01YM-100A
-    basePrice: parseFloat(win.dataset.basePrice),
+    productSku: 'B001-01YM-100A',
     metalCode: 'YM',
     variation: '',                         // '' | 'Lab'
     size: '6.5',
@@ -40,11 +101,9 @@
     spiff: '',
     instructions: '',
     internalNotes: ['', '', '', '', ''],
-    dateNeeded: '2026-11-18',
-    images: [
-      'assets/images/products/B001-01YA.jpg'
-    ]
+    dateNeeded: '2026-11-18'
   };
+  const product = () => products[state.productSku];
 
   /* ---------------- fully-mounted lab center catalogue ---------------- */
   // Live site: stoneSizeID options come from productEdit_act.asp per shape.
@@ -81,94 +140,108 @@
   // Internal wholesale fee guide (CAD). fee: number = flat fee, 0 =
   // complimentary, 'quote' = quote required (not included in the total).
   // reference: true lists the item with its fee but it cannot be selected.
+  // types: the product types the item applies to (ids from product types).
   // Center stone size/shape changes are not listed here: that fee is
   // already applied from the carat weight of the center stone provided.
+  const ER = 'engagement', WB = 'band', ST = 'stackable', EA = 'earrings', NE = 'necklace';
+  const ALL = [ER, WB, ST, EA, NE];
   const defaultCatalogue = [
     { group: 'Head / Prongs', items: [
-      { id: 'prong-count',     name: 'Change number of prongs', fee: 0 },
-      { id: 'prong-type',      name: 'Change prong type', fee: 0 },
-      { id: 'prong-placement', name: 'Change prong placement', fee: 0 },
-      { id: 'support-bar',     name: 'Add or remove support bar', fee: 0 },
-      { id: 'orientation',     name: 'Change center orientation (NS / EW or kite)', fee: 0 },
-      { id: 'platinum-head',   name: 'Upgrade to platinum head on gold style', fee: 80 },
-      { id: 'hidden-halo-add', name: 'Add standard hidden halo', fee: 130 },
-      { id: 'hidden-halo-rem', name: 'Remove standard hidden halo', fee: 0 }
+      { id: 'prong-count',     name: 'Change number of prongs', fee: 0, types: [ER] },
+      { id: 'prong-type',      name: 'Change prong type', fee: 0, types: [ER] },
+      { id: 'prong-placement', name: 'Change prong placement', fee: 0, types: [ER] },
+      { id: 'support-bar',     name: 'Add or remove support bar', fee: 0, types: [ER] },
+      { id: 'orientation',     name: 'Change center orientation (NS / EW or kite)', fee: 0, types: [ER] },
+      { id: 'platinum-head',   name: 'Upgrade to platinum head on gold style', fee: 80, types: [ER] },
+      { id: 'hidden-halo-add', name: 'Add standard hidden halo', fee: 130, types: [ER] },
+      { id: 'hidden-halo-rem', name: 'Remove standard hidden halo', fee: 0, types: [ER] }
     ]},
     { group: 'Shank / Band', items: [
-      { id: 'milgrain',   name: 'Add or remove milgrain', fee: 0 },
-      { id: 'knife-edge', name: 'Add or remove knife edge', fee: 0 },
-      { id: 'euroshank',  name: 'Add or remove euroshank', fee: 0 },
-      { id: 'cathedral',  name: 'Add or remove cathedral', fee: 80 },
-      { id: 'atelier',    name: 'Full conversion to Atelier', hint: 'signature euroshank, VS melee & Atelier spiff', fee: 'quote' }
+      { id: 'milgrain',   name: 'Add or remove milgrain', fee: 0, types: [ER, WB, ST] },
+      { id: 'knife-edge', name: 'Add or remove knife edge', fee: 0, types: [ER, WB, ST] },
+      { id: 'euroshank',  name: 'Add or remove euroshank', fee: 0, types: [ER] },
+      { id: 'cathedral',  name: 'Add or remove cathedral', fee: 80, types: [ER] },
+      { id: 'atelier',    name: 'Full conversion to Atelier', hint: 'signature euroshank, VS melee & Atelier spiff', fee: 'quote', types: [ER] }
     ]},
     { group: 'Interior', items: [
-      { id: 'luna-add',     name: 'Add Luna pillowed interior', fee: 160 },
-      { id: 'luna-rem',     name: 'Remove Luna pillowed interior', fee: 0 },
-      { id: 'luna-full',    name: 'Full conversion to Luna', hint: 'pillows & spiff', fee: 'quote' },
-      { id: 'mens-pattern', name: "Add or remove NC Men's pattern", fee: 0 },
-      { id: 'love-diamond', name: 'Add 1mm RD SI-GH natural diamond (love diamond)', fee: 25 },
-      { id: 'sizing-beads', name: 'Add sizing beads', fee: 80 }
+      { id: 'luna-add',     name: 'Add Luna pillowed interior', fee: 160, types: [ER, WB] },
+      { id: 'luna-rem',     name: 'Remove Luna pillowed interior', fee: 0, types: [ER, WB] },
+      { id: 'luna-full',    name: 'Full conversion to Luna', hint: 'pillows & spiff', fee: 'quote', types: [ER, WB] },
+      { id: 'mens-pattern', name: "Add or remove NC Men's pattern", fee: 0, types: [WB] },
+      { id: 'love-diamond', name: 'Add 1mm RD SI-GH natural diamond (love diamond)', fee: 25, types: [ER, WB, ST] },
+      { id: 'sizing-beads', name: 'Add sizing beads', fee: 80, types: [ER, WB, ST] }
     ]},
     { group: 'Engraving', items: [
-      { id: 'hand-engraving-add', name: 'Add hand engraving', fee: 220 },
-      { id: 'hand-engraving-rem', name: 'Remove hand engraving', fee: 0 },
-      { id: 'laser-engraving',    name: 'Custom laser engraving', fee: 50 }
+      { id: 'hand-engraving-add', name: 'Add hand engraving', fee: 220, types: [ER, WB, ST] },
+      { id: 'hand-engraving-rem', name: 'Remove hand engraving', fee: 0, types: [ER, WB, ST] },
+      { id: 'laser-engraving',    name: 'Custom laser engraving', fee: 50, types: ALL }
     ]},
     { group: 'Diamonds', items: [
-      { id: 'lab-melee',        name: 'Change to lab grown melee', hint: 'see B2B for the LAB SKU (Variations above)', fee: 0 },
-      { id: 'gemstone-melee',   name: 'Change to coloured gemstone melee', fee: 'quote' },
-      { id: 'add-rem-diamonds', name: 'Add or remove diamonds', fee: 'quote' },
-      { id: 'diamond-sizes',    name: 'Change diamond sizes', fee: 'quote' },
-      { id: 'diamond-quality',  name: 'Change diamond quality (other than lab)', fee: 'quote' }
+      { id: 'lab-melee',        name: 'Change to lab grown melee', hint: 'see B2B for the LAB SKU (Variations above)', fee: 0, types: ALL },
+      { id: 'gemstone-melee',   name: 'Change to coloured gemstone melee', fee: 'quote', types: ALL },
+      { id: 'add-rem-diamonds', name: 'Add or remove diamonds', fee: 'quote', types: ALL },
+      { id: 'diamond-sizes',    name: 'Change diamond sizes', fee: 'quote', types: ALL },
+      { id: 'diamond-quality',  name: 'Change diamond quality (other than lab)', fee: 'quote', types: ALL }
     ]},
     { group: 'Design', items: [
-      { id: 'combine-styles', name: 'Combining two styles', fee: 'quote' },
-      { id: 'full-custom',    name: 'Complete custom (not based on any of our styles)', fee: 'quote' }
+      { id: 'combine-styles', name: 'Combining two styles', fee: 'quote', types: [ER, WB, ST] },
+      { id: 'full-custom',    name: 'Complete custom (not based on any of our styles)', fee: 'quote', types: ALL }
     ]},
     { group: 'Services', items: [
-      { id: 'nickel-free',  name: 'Nickel-free white gold', fee: 150 },
-      { id: 'soldering',    name: 'Soldering', hint: 'per ring', fee: 50 },
-      { id: 'retip-prongs', name: 'Retipping prongs', fee: 100, reference: true }
+      { id: 'nickel-free',  name: 'Nickel-free white gold', fee: 150, types: [ER, WB, ST] },
+      { id: 'soldering',    name: 'Soldering', hint: 'per ring', fee: 50, types: [WB, ST] },
+      { id: 'retip-prongs', name: 'Retipping prongs', fee: 100, reference: true, types: [ER] }
     ]},
     { group: 'Add-ons', items: [
-      { id: 'travel-ring', name: 'Silver/CZ travel ring', hint: 'complimentary with an Atelier ER purchase', fee: 200 }
+      { id: 'travel-ring', name: 'Silver/CZ travel ring', hint: 'complimentary with an Atelier ER purchase', fee: 200, types: [ER] }
     ]}
   ];
 
   // Live catalogue: the fee guide by default, or the version saved from the
   // title-bar "Customization settings" editor (this browser only).
   const CATALOGUE_KEY = 'pd.customizationCatalogue';
+  let productTypes = [];
   let customizationCatalogue = [];
   let customizationById = {};
 
-  function setCatalogue(groups) {
-    customizationCatalogue = groups;
+  const itemAppliesTo = (it, typeId) => Array.isArray(it.types) ? it.types.includes(typeId) : true;
+
+  function setCatalogue(data) {
+    productTypes = data.types;
+    customizationCatalogue = data.groups;
     customizationById = {};
-    groups.forEach(g => g.items.forEach(i => { customizationById[i.id] = i; }));
-    // drop selections that no longer exist
-    state.customizations.ids = state.customizations.ids.filter(id => customizationById[id] && !customizationById[id].reference);
+    data.groups.forEach(g => g.items.forEach(i => { customizationById[i.id] = i; }));
+    pruneSelections();
   }
-  function cloneCatalogue(groups) {
-    return groups.map(g => ({ group: g.group, items: g.items.map(i => Object.assign({}, i)) }));
+  // drop selections that no longer exist, are reference-only or do not
+  // apply to the current product type
+  function pruneSelections() {
+    state.customizations.ids = state.customizations.ids.filter(id => {
+      const it = customizationById[id];
+      return it && !it.reference && itemAppliesTo(it, product().type);
+    });
+  }
+  function cloneCatalogue() {
+    return {
+      types: defaultProductTypes.map(t => Object.assign({}, t)),
+      groups: defaultCatalogue.map(g => ({ group: g.group, items: g.items.map(i => Object.assign({}, i, { types: i.types.slice() })) }))
+    };
   }
   function loadCatalogue() {
     try {
       const raw = localStorage.getItem(CATALOGUE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return parsed;
+        // older saves were a bare group array without product types
+        if (Array.isArray(parsed)) return { types: defaultProductTypes.map(t => Object.assign({}, t)), groups: parsed };
+        if (parsed && Array.isArray(parsed.groups) && Array.isArray(parsed.types)) return parsed;
       }
     } catch (e) { /* storage unavailable: fall back to the fee guide */ }
-    return cloneCatalogue(defaultCatalogue);
+    return cloneCatalogue();
   }
-  function saveCatalogue(groups) {
-    try { localStorage.setItem(CATALOGUE_KEY, JSON.stringify(groups)); } catch (e) { /* ignore */ }
+  function saveCatalogue(data) {
+    try { localStorage.setItem(CATALOGUE_KEY, JSON.stringify(data)); } catch (e) { /* ignore */ }
   }
-  function resetCatalogue() {
-    try { localStorage.removeItem(CATALOGUE_KEY); } catch (e) { /* ignore */ }
-    setCatalogue(cloneCatalogue(defaultCatalogue));
-  }
-  setCatalogue(loadCatalogue());
 
   function customizationTotals(ids) {
     let fees = 0, quotes = 0;
@@ -184,8 +257,12 @@
   const mock = {
     // Fee guide, Services: "Setting your center stone $80".
     centerStoneSettingFee: 80,
-    ringOversizeFee(size) {
+    ringOversizeFee(size, rule) {
       const s = parseFloat(size);
+      if (rule.kind === 'perFullSize') {
+        // Live band page: "$30.00 per full size will apply if above 12.75"
+        return s > rule.above ? rule.fee * Math.ceil(s - rule.above) : 0;
+      }
       if (s >= 11) return 50;
       if (s >= 9.75) return 25;
       if (s <= 3.5) return -15; // "undersize" (shown as negative like the live site)
@@ -218,6 +295,7 @@
   const money = n => Number(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const longDate = d => d.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const feeText = it => it.fee === 'quote' ? 'Quote required' : (it.fee > 0 ? '$' + money(it.fee) : 'Complimentary');
 
   function bind(name, html) {
     $$(`[data-bind="${name}"]`).forEach(el => { el.innerHTML = html; });
@@ -233,8 +311,10 @@
 
   /* ---------------- SKU ---------------- */
   function currentSku() {
+    const p = product();
+    if (!p.metal.options) return p.sku;
     // B001-01 + metal code + [-Lab] + -NNNA  (NNN = carat * 100)
-    const parts = state.baseSku.split('-');          // ["B001","01YM","100A"]
+    const parts = p.sku.split('-');          // ["B001","01YM","100A"]
     const styleNo = parts[0] + '-' + parts[1].slice(0, 2) + state.metalCode;
     let ct = state.diamondSize.value > 0 ? Math.round(state.diamondSize.value * 100) : 100;
     const last = String(ct).padStart(3, '0') + 'A';
@@ -242,16 +322,17 @@
   }
 
   function skuSuffix() {
-    if (state.mounted === 'Fully Mounted') return '';
+    if (!product().centerStone || state.mounted === 'Fully Mounted') return '';
     return '-C'; // customer-supplied center stone
   }
 
   /* ---------------- price ---------------- */
   // Every amount that goes into the total, each with its display line.
   function priceBreakdown() {
+    const p = product();
     const b = {
-      base: state.basePrice,
-      ringOversize: mock.ringOversizeFee(state.size),
+      base: p.price,
+      ringOversize: mock.ringOversizeFee(state.size, p.oversize),
       centerStone: 0,          // fully-mounted lab center: stone + setting
       stoneOversize: 0,
       setting: 0,              // we set the customer's center stone
@@ -263,15 +344,17 @@
     if (b.ringOversize > 0) b.lines.oversize = `Ring Oversize Fee: $${money(b.ringOversize)}`;
     if (b.ringOversize < 0) b.lines.oversize = `Ring Undersize Fee: $${money(b.ringOversize)}`;
 
-    if (state.mounted === 'Fully Mounted') {
-      b.centerStone = state.fullyMounted.price + 0; // setting price: complimentary
-      b.lines.centerStone = `Lab Center Stone: $${money(b.centerStone)} (setting complimentary)`;
-      b.stoneOversize = mock.stoneOversizeFee(state.fullyMounted.weight);
-    } else {
-      if (state.customStone) b.stoneOversize = mock.stoneOversizeFee(state.customStone.weight);
-      if (state.sendingStoneForSetting === 'Yes') {
-        b.setting = mock.centerStoneSettingFee;
-        b.lines.setting = `Center Stone Setting Fee: $${money(b.setting)}`;
+    if (p.centerStone) {
+      if (state.mounted === 'Fully Mounted') {
+        b.centerStone = state.fullyMounted.price + 0; // setting price: complimentary
+        b.lines.centerStone = `Lab Center Stone: $${money(b.centerStone)} (setting complimentary)`;
+        b.stoneOversize = mock.stoneOversizeFee(state.fullyMounted.weight);
+      } else {
+        if (state.customStone) b.stoneOversize = mock.stoneOversizeFee(state.customStone.weight);
+        if (state.sendingStoneForSetting === 'Yes') {
+          b.setting = mock.centerStoneSettingFee;
+          b.lines.setting = `Center Stone Setting Fee: $${money(b.setting)}`;
+        }
       }
     }
     if (b.stoneOversize > 0) b.lines.stoneOversize = `Stone Oversize Fee: $${money(b.stoneOversize)}`;
@@ -288,14 +371,76 @@
 
   function engravingFee() {
     if (!state.engraving) return 0;
-    return (state.engraving.outside ? 25 : 0) + (state.engraving.inside ? 15 : 0);
+    const f = product().engravingFees;
+    return (state.engraving.outside ? f.outside : 0) + (state.engraving.inside ? f.inside : 0);
   }
 
   /* ---------------- render ---------------- */
+  function renderProductChrome() {
+    const p = product();
+
+    // title bar switch
+    const sw = $('#pdSkuSwitch');
+    sw.innerHTML = Object.values(products).map(x =>
+      `<option value="${x.sku}"${x.sku === p.sku ? ' selected' : ''}>${x.sku}</option>`).join('');
+    bind('productType', productTypeName(p.type));
+
+    // thumbnails
+    const thumbs = p.images.map((src, i) => src
+      ? `<div class="pd-thumb${i === 0 ? ' is-active' : ''}" data-image="${src}"><img src="${src}" alt="${esc(p.sku)} view ${i + 1}"></div>`
+      : `<div class="pd-thumb pd-thumb--placeholder" data-image="" data-label="Alt view ${i}"><span>Alt view ${i}</span></div>`);
+    let html = thumbs.join('');
+    if (p.matchingBand) {
+      html += `<div class="pd-thumbs-heading">Matching band</div>
+        <a class="pd-thumb pd-thumb--link" href="#" data-sku="${p.matchingBand.sku}" title="Open ${p.matchingBand.sku}">
+          <img src="${p.matchingBand.img}" alt="Matching band ${p.matchingBand.sku}"></a>`;
+    }
+    $('#pdThumbs').innerHTML = html;
+    $('#pdMainImage').src = p.images[0];
+    $('#pdMainImage').alt = p.sku;
+
+    bind('finish', esc(p.finish));
+    bind('subtitle', esc(p.subtitle));
+    $('[data-bind="subtitle"]').hidden = !p.subtitle;
+    bind('collection', esc(p.collection));
+    $('#pdEmailLink').href = `mailto:service@crownring.com?subject=Custom%20Request%20for%20ring%20nbr%20${encodeURIComponent(p.sku)}`;
+
+    // ring info
+    form.karatColour.hidden = !p.metal.options;
+    const metalFixed = $('[data-bind="metalFixed"]');
+    metalFixed.hidden = !!p.metal.options;
+    metalFixed.textContent = p.metal.fixed || '';
+    if (p.metal.options) form.karatColour.value = p.metal.selected;
+    $('#rowWidth').hidden = !p.width;
+    bind('width', esc(p.width || ''));
+    $('#rowVariations').hidden = !p.variations;
+
+    // sizes
+    const size = $('#pdSize');
+    size.innerHTML = '';
+    for (let s = p.sizes.from; s <= p.sizes.to; s += 0.25) {
+      const v = String(s);
+      size.add(new Option(v, v, false, v === state.size));
+    }
+
+    // center stone
+    $('#pdCenterStone').hidden = !p.centerStone;
+
+    // diamond info
+    const di = p.diamondInfo;
+    bind('diType', esc(di.type)); bind('diQty', di.qty); bind('diShape', esc(di.shape));
+    bind('diTcw', esc(di.tcw)); bind('diColour', esc(di.colour)); bind('diQuality', esc(di.quality));
+
+    // price notes
+    bind('oversizeNote', esc(p.oversizeNote));
+    $('[data-bind="oversizeNote"]').hidden = !p.oversizeNote;
+  }
+
   function render() {
+    const p = product();
     bind('sku', currentSku());
     bind('skuSuffix', skuSuffix());
-    bind('price', money(state.basePrice));
+    bind('price', money(p.price));
 
     const pb = priceBreakdown();
     bind('oversizeFee', pb.lines.oversize);
@@ -316,7 +461,7 @@
     if (!czs.hidden) {
       bind('customizationList', ids.map(id => {
         const it = customizationById[id];
-        const fee = it.fee === 'quote' ? '<span class="pd-summary-quote">Quote required</span>' : (it.fee > 0 ? '$' + money(it.fee) : 'Complimentary');
+        const fee = it.fee === 'quote' ? '<span class="pd-summary-quote">Quote required</span>' : feeText(it);
         return `<li><span>${esc(it.name)}</span><span>${fee}</span></li>`;
       }).join(''));
       const notes = $('[data-bind="customizationNotes"]');
@@ -328,38 +473,40 @@
       q.textContent = pb.quotes ? 'Head Office will quote the item(s) marked above before the order is confirmed.' : '';
     }
 
-    // mounted toggle
-    const fm = state.mounted === 'Fully Mounted';
-    $('#pdFullyMounted').hidden = !fm;
-    $('#pdUnmounted').hidden = fm;
-    bind('stonePrice', '$' + money(state.fullyMounted.price));
-    const sof = mock.stoneOversizeFee(state.fullyMounted.weight);
-    $('[data-bind="stoneOversizeRow"]').hidden = !(fm && sof > 0);
-    bind('stoneOversizeFee', '$' + money(sof));
+    if (p.centerStone) {
+      // mounted toggle
+      const fm = state.mounted === 'Fully Mounted';
+      $('#pdFullyMounted').hidden = !fm;
+      $('#pdUnmounted').hidden = fm;
+      bind('stonePrice', '$' + money(state.fullyMounted.price));
+      const sof = mock.stoneOversizeFee(state.fullyMounted.weight);
+      $('[data-bind="stoneOversizeRow"]').hidden = !(fm && sof > 0);
+      bind('stoneOversizeFee', '$' + money(sof));
 
-    // shape / size dropdown labels
-    $('#ddShape .pd-dd-value').innerHTML = state.shape.value > 0
-      ? `<img src="${state.shape.img}" alt=""> ${esc(state.shape.label)}`
-      : 'Custom Shape';
-    $('#ddSize .pd-dd-value').innerHTML = state.diamondSize.value > 0
-      ? `${esc(state.diamondSize.label)} <em>${esc(state.diamondSize.range)}</em>`
-      : 'Custom Size <em>Out of Range</em>';
-    $('#rowDiamondSize').hidden = state.shape.value == 0;
+      // shape / size dropdown labels
+      $('#ddShape .pd-dd-value').innerHTML = state.shape.value > 0
+        ? `<img src="${state.shape.img}" alt=""> ${esc(state.shape.label)}`
+        : 'Custom Shape';
+      $('#ddSize .pd-dd-value').innerHTML = state.diamondSize.value > 0
+        ? `${esc(state.diamondSize.label)} <em>${esc(state.diamondSize.range)}</em>`
+        : 'Custom Size <em>Out of Range</em>';
+      $('#rowDiamondSize').hidden = state.shape.value == 0;
 
-    // custom stone summary
-    const ci = $('#pdCustomInfo');
-    if (state.customStone && !fm) {
-      const c = state.customStone;
-      let html = '';
-      if (state.shape.value == 0) html += `<div>Diamond Shape: ${esc(c.shapeLabel)}</div>`;
-      html += `<div>Center Diamond Weight: ${c.weight} ct</div>`;
-      html += `<div>Dimensions: ${c.L} mm X ${c.W} mm X ${c.D} mm</div>`;
-      html += `<div>Stone Type: <span class="cap">${esc(c.type)}</span></div>`;
-      if (c.note) html += `<div>Stone Note: ${esc(c.note.length > 33 ? c.note.slice(0, 30) + '...' : c.note)}</div>`;
-      bind('customInfo', html);
-      ci.hidden = false;
-    } else {
-      ci.hidden = true;
+      // custom stone summary
+      const ci = $('#pdCustomInfo');
+      if (state.customStone && !fm) {
+        const c = state.customStone;
+        let html = '';
+        if (state.shape.value == 0) html += `<div>Diamond Shape: ${esc(c.shapeLabel)}</div>`;
+        html += `<div>Center Diamond Weight: ${c.weight} ct</div>`;
+        html += `<div>Dimensions: ${c.L} mm X ${c.W} mm X ${c.D} mm</div>`;
+        html += `<div>Stone Type: <span class="cap">${esc(c.type)}</span></div>`;
+        if (c.note) html += `<div>Stone Note: ${esc(c.note.length > 33 ? c.note.slice(0, 30) + '...' : c.note)}</div>`;
+        bind('customInfo', html);
+        ci.hidden = false;
+      } else {
+        ci.hidden = true;
+      }
     }
 
     // engraving
@@ -372,7 +519,8 @@
       if (e.outside) html += `<div>Outside - <strong>Font:</strong> ${esc(e.outside.font)} - <strong>Text:</strong> ${esc(e.outside.text)}</div>`;
       if (e.inside) html += `<div>Inside - <strong>Font:</strong> ${esc(e.inside.font)} - <strong>Text:</strong> ${esc(e.inside.text)}</div>`;
       bind('engravingDetails', html);
-      bind('engravingFee', '$' + money(engravingFee()));
+      const fee = engravingFee();
+      bind('engravingFee', fee > 0 ? '$' + money(fee) : 'Complimentary');
     }
 
     // spiff
@@ -392,13 +540,40 @@
     $('[name=dateNeeded]', win).value = state.dateNeeded;
   }
 
+  /* ---------------- product switch ---------------- */
+  // Everything tied to the item resets; SPIFF, internal notes and qty stay.
+  function switchProduct(sku) {
+    if (!products[sku]) return;
+    state.productSku = sku;
+    const p = products[sku];
+    state.metalCode = p.metal.code || '';
+    state.variation = '';
+    state.size = p.sizes.selected;
+    state.mounted = 'Unmounted';
+    state.shape = { value: '1', label: 'Round', img: 'assets/images/diamond-shapes/round.jpg' };
+    state.diamondSize = { value: '1', label: '1.00', range: 'Range in mm 6.3 to 6.5' };
+    state.customStone = null;
+    state.sendingStoneForSetting = 'No';
+    state.engraving = null;
+    state.customizations = { ids: [], notes: '' };
+    state.instructions = '';
+    state.dateNeeded = p.dateNeeded;
+    if (p.centerStone) {
+      $$('[name=diamondMounted]', form).forEach(r => { r.checked = r.value === 'Unmounted'; });
+      form.sendingStoneForSetting.value = 'No';
+      form.diamondShape3.value = '1';
+      form.diamondSize3.value = '1';
+      form.stoneShapeID.value = '1';
+      state.fullyMounted = { shapeID: '1', weight: 1, price: 220.22 };
+      fillStoneSizes();
+    }
+    if (p.variations) form.variation.selectedIndex = 0;
+    renderProductChrome();
+    render();
+  }
+
   /* ---------------- populate selects ---------------- */
   function fillSelects() {
-    const size = $('#pdSize');
-    for (let s = 1.5; s <= 12; s += 0.25) {
-      const v = String(s);
-      size.add(new Option(v, v, false, v === state.size));
-    }
     const qty = $('#pdQty');
     for (let q = 1; q <= 30; q++) qty.add(new Option(q, q));
   }
@@ -477,6 +652,10 @@
     dialog.innerHTML = '';
     dialogHandlers = null;
   }
+  // Clicking the dim area closes the dialog, but only when the press started
+  // there too: a drag that ends outside the dialog must not close it.
+  let pressedOnBackdrop = false;
+  backdrop.addEventListener('pointerdown', e => { pressedOnBackdrop = e.target === backdrop; });
   backdrop.addEventListener('click', e => {
     const btn = e.target.closest('[data-dialog]');
     if (btn) {
@@ -485,13 +664,13 @@
       if (dialogHandlers && dialogHandlers[act]) dialogHandlers[act](btn);
       return;
     }
-    if (e.target === backdrop) closeDialog();
+    if (e.target === backdrop && pressedOnBackdrop) closeDialog();
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !backdrop.hidden) closeDialog(); });
 
   /* ---- lightbox ---- */
   function openLightbox(startSrc) {
-    const imgs = state.images;
+    const imgs = product().images.filter(Boolean);
     let idx = Math.max(0, imgs.indexOf(startSrc));
     openDialog('tplLightbox', d => {
       const main = $('.pd-lightbox-image', d);
@@ -572,6 +751,10 @@
   /* ---- engraving ---- */
   function openEngraving() {
     openDialog('tplEngraving', d => {
+      const fees = product().engravingFees;
+      const feeLabel = n => n > 0 ? `($${money(n)})` : '(Complimentary)';
+      bind('ngrvOutsideFee', feeLabel(fees.outside));
+      bind('ngrvInsideFee', feeLabel(fees.inside));
       const boxes = $$('[name=ngrv_pos]', d);
       const blocks = $$('.pd-engrave-block', d);
       const sync = () => blocks.forEach(b => {
@@ -613,12 +796,17 @@
   /* ---- customize ---- */
   function openCustomize() {
     openDialog('tplCustomize', d => {
+      const typeId = product().type;
+      bind('czProductType', esc(productTypeName(typeId)));
       const list = $('.pd-cz-list', d);
-      list.innerHTML = customizationCatalogue.map(g => `
+      const groups = customizationCatalogue
+        .map(g => ({ group: g.group, items: g.items.filter(it => itemAppliesTo(it, typeId)) }))
+        .filter(g => g.items.length);
+      list.innerHTML = groups.map(g => `
         <div class="pd-cz-group">
           <h4>${esc(g.group)}</h4>
           ${g.items.map(it => {
-            const feeTxt = it.fee === 'quote' ? 'Quote required' : (it.fee > 0 ? '$' + money(it.fee) : 'Complimentary');
+            const feeTxt = feeText(it);
             const feeCls = it.fee === 'quote' ? 'is-quote' : (it.fee > 0 ? '' : 'is-free');
             const hint = it.hint ? ` <span class="pd-cz-hint">(${esc(it.hint)})</span>` : '';
             if (it.reference) {
@@ -635,7 +823,7 @@
               <span class="pd-cz-fee ${feeCls}">${feeTxt}</span>
             </label>`;
           }).join('')}
-        </div>`).join('');
+        </div>`).join('') || `<div class="pd-cz-empty">No customizations are set up for ${esc(productTypeName(typeId))} yet. Add some under menu &rsaquo; Customization settings.</div>`;
       const notes = $('[name=customizationNotes]', d);
       notes.value = state.customizations.notes;
 
@@ -668,12 +856,30 @@
   /* ---- customization settings editor ---- */
   function openCatalogueEditor() {
     openDialog('tplCatalogueEditor', d => {
+      const typesEl = $('.pd-ce-types', d);
       const groupsEl = $('.pd-ce-groups', d);
+      const abbr = name => {
+        const w = name.trim().split(/\s+/).filter(Boolean);
+        return (w.length > 1 ? w.map(x => x[0]).join('') : (w[0] || '??').slice(0, 2)).toUpperCase();
+      };
 
+      // --- product types block ---
+      const typeRowHtml = t => `
+        <div class="pd-ce-type" data-id="${esc(t.id)}">
+          <input type="text" name="typeName" value="${esc(t.name)}" placeholder="Product type">
+          <button type="button" class="pd-ce-btn pd-ce-btn--danger" data-ce="del-type" title="Remove product type">&times;</button>
+        </div>`;
+
+      // --- category / item block ---
       // new rows start as "Flat fee" with an empty amount so a price can be typed straight away
       const feeType = it => it.isNew ? 'fee' : (it.fee === 'quote' ? 'quote' : (it.fee > 0 ? 'fee' : 'free'));
-      const rowHtml = it => `
+      const typeChecks = (types, selected) => types.map(t => `
+        <label class="pd-ce-chip${selected.includes(t.id) ? ' is-on' : ''}" title="${esc(t.name)}">
+          <input type="checkbox" name="types" value="${esc(t.id)}"${selected.includes(t.id) ? ' checked' : ''}>${esc(abbr(t.name))}
+        </label>`).join('');
+      const rowHtml = (it, types) => `
         <tr data-id="${esc(it.id || '')}"${it.reference ? ' class="is-reference"' : ''}>
+          <td class="pd-ce-col-grip"><span class="pd-ce-grip" title="Drag to reorder">&#8942;&#8942;</span></td>
           <td class="pd-ce-col-name"><input type="text" name="name" value="${esc(it.name || '')}" placeholder="Customization"></td>
           <td class="pd-ce-col-hint"><input type="text" name="hint" value="${esc(it.hint || '')}" placeholder="Hint (optional)"></td>
           <td class="pd-ce-col-type">
@@ -685,64 +891,47 @@
           </td>
           <td class="pd-ce-col-amt"><input type="number" name="amount" min="0" step="1" value="${feeType(it) === 'fee' && !it.isNew ? it.fee : ''}"${feeType(it) === 'fee' ? '' : ' disabled'}></td>
           <td class="pd-ce-col-ref"><input type="checkbox" name="reference" title="Reference only"${it.reference ? ' checked' : ''}></td>
+          <td class="pd-ce-col-types">${typeChecks(types, Array.isArray(it.types) ? it.types : types.map(t => t.id))}</td>
           <td class="pd-ce-col-del"><button type="button" class="pd-ce-btn pd-ce-btn--danger" data-ce="del-item" title="Remove">&times;</button></td>
         </tr>`;
-      const groupHtml = g => `
+      const groupHtml = (g, types) => `
         <div class="pd-ce-group">
           <div class="pd-ce-group-head">
             <input type="text" name="group" value="${esc(g.group)}" placeholder="Category name">
+            <span class="pd-ce-group-types" title="Toggle a product type for every customization in this category">Applies to:
+              ${types.map(t => `<button type="button" class="pd-ce-chip pd-ce-chip--btn" data-ce="toggle-type" data-type="${esc(t.id)}" title="${esc(t.name)}">${esc(abbr(t.name))}</button>`).join('')}
+            </span>
             <button type="button" class="pd-ce-btn" data-ce="up" title="Move up">&#9650;</button>
             <button type="button" class="pd-ce-btn" data-ce="down" title="Move down">&#9660;</button>
             <button type="button" class="pd-ce-btn pd-ce-btn--danger" data-ce="del-group">Remove category</button>
           </div>
           <table class="pd-ce-items">
-            <thead><tr><th>Customization</th><th>Hint</th><th>Fee</th><th>Amount ($)</th><th title="Reference only">Ref.</th><th></th></tr></thead>
-            <tbody>${g.items.map(rowHtml).join('')}</tbody>
+            <thead><tr><th></th><th>Customization</th><th>Hint</th><th>Fee</th><th>Amount ($)</th><th title="Reference only">Ref.</th><th>Applies to</th><th></th></tr></thead>
+            <tbody>${g.items.map(it => rowHtml(it, types)).join('')}</tbody>
           </table>
           <button type="button" class="pd-ce-btn pd-ce-add-item" data-ce="add-item">+ Add customization</button>
         </div>`;
-      const draw = groups => { groupsEl.innerHTML = groups.map(groupHtml).join('') || '<div class="pd-ce-empty">No categories yet.</div>'; };
-      draw(customizationCatalogue);
-
-      // editing actions
-      d.addEventListener('click', e => {
-        const btn = e.target.closest('[data-ce]');
-        if (!btn) return;
-        const group = btn.closest('.pd-ce-group');
-        switch (btn.dataset.ce) {
-          case 'add-group':
-            if ($('.pd-ce-empty', groupsEl)) groupsEl.innerHTML = '';
-            groupsEl.insertAdjacentHTML('beforeend', groupHtml({ group: '', items: [] }));
-            $('.pd-ce-group:last-child input[name=group]', groupsEl).focus();
-            break;
-          case 'del-group':
-            if (group.querySelectorAll('tbody tr').length === 0 || confirm('Remove this category and its customizations?')) group.remove();
-            break;
-          case 'up': if (group.previousElementSibling) group.parentNode.insertBefore(group, group.previousElementSibling); break;
-          case 'down': if (group.nextElementSibling) group.parentNode.insertBefore(group.nextElementSibling, group); break;
-          case 'add-item': {
-            const tb = $('tbody', group);
-            tb.insertAdjacentHTML('beforeend', rowHtml({ id: '', name: '', fee: 0, isNew: true }));
-            $('tr:last-child input[name=name]', tb).focus();
-            break;
-          }
-          case 'del-item': btn.closest('tr').remove(); break;
-        }
-      });
-      d.addEventListener('change', e => {
-        const t = e.target;
-        if (t.name === 'feeType') {
-          const amt = $('[name=amount]', t.closest('tr'));
-          amt.disabled = t.value !== 'fee';
-          if (t.value !== 'fee') amt.value = ''; else if (!amt.value) amt.value = '0';
-        }
-        if (t.name === 'reference') t.closest('tr').classList.toggle('is-reference', t.checked);
-      });
+      const draw = data => {
+        typesEl.innerHTML = data.types.map(typeRowHtml).join('') || '<div class="pd-ce-empty">No product types yet.</div>';
+        groupsEl.innerHTML = data.groups.map(g => groupHtml(g, data.types)).join('') || '<div class="pd-ce-empty">No categories yet.</div>';
+      };
+      draw({ types: productTypes, groups: customizationCatalogue });
 
       // read the DOM back into catalogue data
       const slug = str => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'item';
       const collect = () => {
         const used = new Set();
+        const types = [];
+        $$('.pd-ce-type', typesEl).forEach(row => {
+          const name = $('[name=typeName]', row).value.trim();
+          if (!name) return;
+          let id = row.dataset.id || slug(name);
+          while (used.has(id)) id += '-2';
+          used.add(id);
+          types.push({ id, name });
+        });
+        const typeIds = types.map(t => t.id);
+        used.clear();
         const groups = [];
         $$('.pd-ce-group', groupsEl).forEach(g => {
           const name = $('[name=group]', g).value.trim();
@@ -759,27 +948,113 @@
             if (hint) it.hint = hint;
             it.fee = type === 'quote' ? 'quote' : (type === 'fee' ? (parseFloat($('[name=amount]', tr).value) || 0) : 0);
             if ($('[name=reference]', tr).checked) it.reference = true;
+            it.types = $$('[name=types]:checked', tr).map(c => c.value).filter(v => typeIds.includes(v));
             items.push(it);
           });
           if (name || items.length) groups.push({ group: name || 'Untitled', items });
         });
-        return groups;
+        return { types, groups };
       };
+      // product type changes affect every row, so redraw from the current edits
+      const redraw = mutate => { const data = collect(); mutate(data); draw(data); };
+
+      // editing actions
+      d.addEventListener('click', e => {
+        const btn = e.target.closest('[data-ce]');
+        if (!btn) return;
+        const group = btn.closest('.pd-ce-group');
+        switch (btn.dataset.ce) {
+          case 'add-type': {
+            const name = prompt('New product type name (e.g. Bracelet):');
+            if (name && name.trim()) redraw(data => data.types.push({ id: '', name: name.trim() }));
+            break;
+          }
+          case 'del-type': {
+            const row = btn.closest('.pd-ce-type');
+            const name = $('[name=typeName]', row).value || 'this product type';
+            if (confirm(`Remove ${name}? Customizations will no longer apply to it.`)) { row.remove(); redraw(() => {}); }
+            break;
+          }
+          case 'add-group':
+            if ($('.pd-ce-empty', groupsEl)) groupsEl.innerHTML = '';
+            groupsEl.insertAdjacentHTML('beforeend', groupHtml({ group: '', items: [] }, collect().types));
+            $('.pd-ce-group:last-child input[name=group]', groupsEl).focus();
+            break;
+          case 'del-group':
+            if (group.querySelectorAll('tbody tr').length === 0 || confirm('Remove this category and its customizations?')) group.remove();
+            break;
+          case 'up': if (group.previousElementSibling) group.parentNode.insertBefore(group, group.previousElementSibling); break;
+          case 'down': if (group.nextElementSibling) group.parentNode.insertBefore(group.nextElementSibling, group); break;
+          case 'add-item': {
+            const tb = $('tbody', group);
+            tb.insertAdjacentHTML('beforeend', rowHtml({ id: '', name: '', fee: 0, isNew: true, types: [product().type] }, collect().types));
+            $('tr:last-child input[name=name]', tb).focus();
+            break;
+          }
+          case 'del-item': btn.closest('tr').remove(); break;
+          case 'toggle-type': {
+            // all on -> all off, otherwise all on
+            const boxes = $$(`tbody [name=types][value="${btn.dataset.type}"]`, group);
+            const allOn = boxes.length && boxes.every(b => b.checked);
+            boxes.forEach(b => { b.checked = !allOn; b.closest('.pd-ce-chip').classList.toggle('is-on', !allOn); });
+            break;
+          }
+        }
+      });
+      // drag a row by its handle to reorder it within its category
+      // (pointer events: works with mouse and touch, no native drag-and-drop)
+      let drag = null;
+      d.addEventListener('pointerdown', e => {
+        const grip = e.target.closest('.pd-ce-grip');
+        if (!grip) return;
+        const row = grip.closest('tr');
+        drag = { row, tbody: row.parentNode };
+        row.classList.add('is-dragging');
+        d.classList.add('is-reordering');
+        grip.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      });
+      d.addEventListener('pointermove', e => {
+        if (!drag) return;
+        const others = Array.from(drag.tbody.children).filter(r => r !== drag.row);
+        for (const r of others) {
+          const b = r.getBoundingClientRect();
+          if (e.clientY < b.top + b.height / 2) {
+            if (r.previousElementSibling !== drag.row) drag.tbody.insertBefore(drag.row, r);
+            return;
+          }
+        }
+        if (drag.tbody.lastElementChild !== drag.row) drag.tbody.appendChild(drag.row);
+      });
+      const endDrag = () => {
+        if (!drag) return;
+        drag.row.classList.remove('is-dragging');
+        d.classList.remove('is-reordering');
+        drag = null;
+      };
+      d.addEventListener('pointerup', endDrag);
+      d.addEventListener('pointercancel', endDrag);
+
+      d.addEventListener('change', e => {
+        const t = e.target;
+        if (t.name === 'feeType') {
+          const amt = $('[name=amount]', t.closest('tr'));
+          amt.disabled = t.value !== 'fee';
+          if (t.value !== 'fee') amt.value = ''; else if (!amt.value) amt.value = '0';
+        }
+        if (t.name === 'reference') t.closest('tr').classList.toggle('is-reference', t.checked);
+        if (t.name === 'types') t.closest('.pd-ce-chip').classList.toggle('is-on', t.checked);
+        if (t.name === 'typeName') redraw(() => {});   // chips show the type's initials
+      });
 
       return {
         save() {
-          const groups = collect();
-          saveCatalogue(groups);
-          setCatalogue(groups);
+          const data = collect();
+          saveCatalogue(data);
+          setCatalogue(data);
           closeDialog();
           render();
           toast('Customization settings saved');
-        },
-        reset() {
-          if (!confirm('Reset all categories and customizations to the internal wholesale fee guide?')) return;
-          resetCatalogue();
-          draw(customizationCatalogue);
-          render();
         }
       };
     });
@@ -861,7 +1136,7 @@
 
   /* ---------------- cart ---------------- */
   function addToCart() {
-    if (state.mounted === 'Unmounted' && state.shape.value > 0 && state.diamondSize.value == 0 && !state.customStone) {
+    if (product().centerStone && state.mounted === 'Unmounted' && state.shape.value > 0 && state.diamondSize.value == 0 && !state.customStone) {
       return alert('Please select a Diamond Size.');
     }
     const cart = $('#cartCount');
@@ -870,16 +1145,20 @@
   }
 
   /* ---------------- events ---------------- */
-  // thumbnails
-  $$('.pd-thumb[data-image]').forEach(t => t.addEventListener('click', () => {
+  // product switch
+  $('#pdSkuSwitch').addEventListener('change', e => switchProduct(e.target.value));
+  $('#pdSkuSwitch').addEventListener('click', e => e.stopPropagation());
+
+  // thumbnails (rendered per product, so delegate)
+  $('#pdThumbs').addEventListener('click', e => {
+    const link = e.target.closest('.pd-thumb--link');
+    if (link) { e.preventDefault(); toast(`Would open ${link.dataset.sku}`); return; }
+    const t = e.target.closest('.pd-thumb[data-image]');
+    if (!t) return;
     const src = t.dataset.image;
     if (!src) return toast(`${t.dataset.label}: image not available in this POC`);
     $('#pdMainImage').src = src;
-    $$('.pd-thumb').forEach(x => x.classList.toggle('is-active', x === t));
-  }));
-  $('.pd-thumb--link').addEventListener('click', e => {
-    e.preventDefault();
-    toast(`Would open ${e.currentTarget.dataset.sku}`);
+    $$('.pd-thumb', $('#pdThumbs')).forEach(x => x.classList.toggle('is-active', x === t));
   });
 
   // form fields
@@ -936,13 +1215,6 @@
     closeMenu();
     switch (el.dataset.action) {
       case 'catalogue-editor': openCatalogueEditor(); break;
-      case 'catalogue-reset':
-        if (confirm('Reset all categories and customizations to the internal wholesale fee guide?')) {
-          resetCatalogue();
-          render();
-          toast('Customizations reset to the fee guide');
-        }
-        break;
       case 'enlarge': openLightbox($('#pdMainImage').getAttribute('src')); break;
       case 'shipping-date': openShippingDate(); break;
       case 'custom-stone': openCustomStone(); break;
@@ -961,12 +1233,16 @@
   });
 
   /* ---------------- boot ---------------- */
+  setCatalogue(loadCatalogue());
   fillSelects();
   fillStoneSizes();
+  renderProductChrome();
   render();
 
   // expose for console poking during the POC
   window.pdState = state;
-  window.pdCatalogue = () => customizationCatalogue;
+  window.pdProducts = products;
+  window.pdCatalogue = () => ({ types: productTypes, groups: customizationCatalogue });
+  window.pdSwitchProduct = switchProduct;
   window.pdRender = render;
 })();
