@@ -652,6 +652,10 @@
     dialog.innerHTML = '';
     dialogHandlers = null;
   }
+  // Clicking the dim area closes the dialog, but only when the press started
+  // there too: a drag that ends outside the dialog must not close it.
+  let pressedOnBackdrop = false;
+  backdrop.addEventListener('pointerdown', e => { pressedOnBackdrop = e.target === backdrop; });
   backdrop.addEventListener('click', e => {
     const btn = e.target.closest('[data-dialog]');
     if (btn) {
@@ -660,7 +664,7 @@
       if (dialogHandlers && dialogHandlers[act]) dialogHandlers[act](btn);
       return;
     }
-    if (e.target === backdrop) closeDialog();
+    if (e.target === backdrop && pressedOnBackdrop) closeDialog();
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !backdrop.hidden) closeDialog(); });
 
@@ -875,6 +879,7 @@
         </label>`).join('');
       const rowHtml = (it, types) => `
         <tr data-id="${esc(it.id || '')}"${it.reference ? ' class="is-reference"' : ''}>
+          <td class="pd-ce-col-grip"><span class="pd-ce-grip" title="Drag to reorder">&#8942;&#8942;</span></td>
           <td class="pd-ce-col-name"><input type="text" name="name" value="${esc(it.name || '')}" placeholder="Customization"></td>
           <td class="pd-ce-col-hint"><input type="text" name="hint" value="${esc(it.hint || '')}" placeholder="Hint (optional)"></td>
           <td class="pd-ce-col-type">
@@ -901,7 +906,7 @@
             <button type="button" class="pd-ce-btn pd-ce-btn--danger" data-ce="del-group">Remove category</button>
           </div>
           <table class="pd-ce-items">
-            <thead><tr><th>Customization</th><th>Hint</th><th>Fee</th><th>Amount ($)</th><th title="Reference only">Ref.</th><th>Applies to</th><th></th></tr></thead>
+            <thead><tr><th></th><th>Customization</th><th>Hint</th><th>Fee</th><th>Amount ($)</th><th title="Reference only">Ref.</th><th>Applies to</th><th></th></tr></thead>
             <tbody>${g.items.map(it => rowHtml(it, types)).join('')}</tbody>
           </table>
           <button type="button" class="pd-ce-btn pd-ce-add-item" data-ce="add-item">+ Add customization</button>
@@ -996,6 +1001,40 @@
           }
         }
       });
+      // drag a row by its handle to reorder it within its category
+      // (pointer events: works with mouse and touch, no native drag-and-drop)
+      let drag = null;
+      d.addEventListener('pointerdown', e => {
+        const grip = e.target.closest('.pd-ce-grip');
+        if (!grip) return;
+        const row = grip.closest('tr');
+        drag = { row, tbody: row.parentNode };
+        row.classList.add('is-dragging');
+        d.classList.add('is-reordering');
+        grip.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      });
+      d.addEventListener('pointermove', e => {
+        if (!drag) return;
+        const others = Array.from(drag.tbody.children).filter(r => r !== drag.row);
+        for (const r of others) {
+          const b = r.getBoundingClientRect();
+          if (e.clientY < b.top + b.height / 2) {
+            if (r.previousElementSibling !== drag.row) drag.tbody.insertBefore(drag.row, r);
+            return;
+          }
+        }
+        if (drag.tbody.lastElementChild !== drag.row) drag.tbody.appendChild(drag.row);
+      });
+      const endDrag = () => {
+        if (!drag) return;
+        drag.row.classList.remove('is-dragging');
+        d.classList.remove('is-reordering');
+        drag = null;
+      };
+      d.addEventListener('pointerup', endDrag);
+      d.addEventListener('pointercancel', endDrag);
+
       d.addEventListener('change', e => {
         const t = e.target;
         if (t.name === 'feeType') {

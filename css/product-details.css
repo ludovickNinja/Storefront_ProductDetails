@@ -621,8 +621,26 @@
   font: inherit;
 }
 .pd-ce-items input[type="number"]:disabled { background: #f0f0f0; color: #999; }
-.pd-ce-items .pd-ce-col-name { width: 27%; }
-.pd-ce-items .pd-ce-col-hint { width: 19%; }
+.pd-ce-items .pd-ce-col-grip { width: 24px; padding: 0; text-align: center; }
+.pd-dialog.is-reordering, .pd-dialog.is-reordering * { user-select: none; cursor: grabbing; }
+.pd-ce-grip {
+  touch-action: none;
+  display: inline-block;
+  min-width: 20px;
+  padding: 4px 0;
+  text-align: center;
+  color: #aaa;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: -3px;
+  cursor: grab;
+  user-select: none;
+}
+.pd-ce-grip:hover { color: #555; }
+.pd-ce-grip:active { cursor: grabbing; }
+.pd-ce-items tr.is-dragging td { background: #fff8dc; opacity: 0.6; }
+.pd-ce-items .pd-ce-col-name { width: 26%; }
+.pd-ce-items .pd-ce-col-hint { width: 18%; }
 .pd-ce-items .pd-ce-col-type { width: 13%; }
 .pd-ce-items .pd-ce-col-amt { width: 9%; }
 .pd-ce-items .pd-ce-col-ref { width: 5%; text-align: center; }
